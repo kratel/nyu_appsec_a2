@@ -28,7 +28,8 @@ def register():
             'SELECT id FROM user WHERE username = ?', (username,)
         ).fetchone() is not None:
             error = 'Username is not available.'
-            return redirect(url_for('auth.register', registered_status='fail'))
+            flash(error)
+            flash('Registration failure.')
 
         if error is None:
             db.execute(
@@ -37,11 +38,10 @@ def register():
             )
             try:
                 db.commit()
+                flash('Registration success.')
             except sqlite3.Error as e:
-                return redirect(url_for('auth.register', registered_status='fail'))
-            return redirect(url_for('auth.register', registered_status='success'))
-
-        flash(error)
+                flash('Registration failure.')
+            return redirect(url_for('auth.register'))
 
     return render_template('auth/register.html')
 

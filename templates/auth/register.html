@@ -17,11 +17,13 @@
     <br>
     <input type="submit" value="Register">
   </form>
-  {% if request.args.get('registered_status') %}
-  {% if request.args.get('registered_status') == 'success' %}
-  <p id="success">Registration Success</p>
-  {% elif request.args.get('registered_status') == 'fail' %}
-  <p id="success">Registration Failure</p>
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes id="success">
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
   {% endif %}
-  {% endif %}
+  {% endwith %}
 {% endblock %}
