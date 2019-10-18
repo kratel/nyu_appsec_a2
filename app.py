@@ -1,11 +1,14 @@
 import os
 
 from flask import Flask
+import db
+import auth
+import spellcheck
 
 
 def create_app(test_config=None):
     # create and configure the app
-    app = Flask('spellchecker', instance_relative_config=True)
+    app = Flask('__name__', instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'spellchecker.sqlite'),
@@ -24,18 +27,16 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    import db
+    with app.app_context():
+        db.init_db()
     db.init_app(app)
 
-    import auth
     app.register_blueprint(auth.bp)
 
-    import spellcheck
     app.register_blueprint(spellcheck.bp)
     app.add_url_rule('/', endpoint='index')
 
     return app
 
 if __name__ == '__main__':
-    db.init_db()
     app = create_app()
