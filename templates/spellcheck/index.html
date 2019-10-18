@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Spell Checker{% endblock %}</h1>
+  {% if g.user %}
+    <a class="action" href="{{ url_for('spellcheck.new_spell_check') }}">Spell Check some text.</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <p>PlaceHolder</p>
+{% endblock %}
