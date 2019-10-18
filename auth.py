@@ -7,6 +7,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from db import get_db
 
+import sqlite3
+
 bp = Blueprint('auth', __name__)
 
 @bp.route('/register', methods=('GET', 'POST'))
@@ -26,14 +28,18 @@ def register():
             'SELECT id FROM user WHERE username = ?', (username,)
         ).fetchone() is not None:
             error = 'Username is not available.'
+            return redirect(url_for('auth.register', registered_status='fail'))
 
         if error is None:
             db.execute(
                 'INSERT INTO user (username, password) VALUES (?, ?)',
                 (username, generate_password_hash(password))
             )
-            db.commit()
-            return redirect(url_for('auth.login'))
+            try:
+                db.commit()
+            except sqlite3.Error as e:
+                return redirect(url_for('auth.register', registered_status='fail'))
+            return redirect(url_for('auth.register', registered_status='success'))
 
         flash(error)
 
