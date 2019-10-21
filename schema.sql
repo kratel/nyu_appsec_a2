@@ -1,7 +1,16 @@
+DROP TABLE IF EXISTS mfa;
 DROP TABLE IF EXISTS user;
+
 
 CREATE TABLE user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL
+  password TEXT NOT NULL,
+  mfa_registered INTEGER NOT NULL
+);
+
+CREATE TABLE mfa (
+  username TEXT NOT NULL,
+  mfa_number TEXT NOT NULL,
+  FOREIGN KEY(username) REFERENCES user(username)
 );

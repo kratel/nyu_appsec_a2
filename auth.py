@@ -17,6 +17,7 @@ def register():
     	# Validate and santize
         username = request.form['username']
         password = request.form['password']
+        mfa = request.form['2fa']
         db = get_db()
         error = None
 
@@ -32,10 +33,19 @@ def register():
             flash('Registration failure.')
 
         if error is None:
+            if (mfa is None) or (mfa == ''):
+                mfa_reg = 0;
+            else:
+                mfa_reg = 1;
             db.execute(
-                'INSERT INTO user (username, password) VALUES (?, ?)',
-                (username, generate_password_hash(password))
+                'INSERT INTO user (username, password, mfa_registered) VALUES (?, ?, ?)',
+                (username, generate_password_hash(password), mfa_reg)
             )
+            if mfa_reg:
+                db.execute(
+                    'INSERT INTO mfa (username, mfa_number) VALUES (?, ?)',
+                    (username, mfa)
+                )
             try:
                 db.commit()
                 flash('Registration success.')
