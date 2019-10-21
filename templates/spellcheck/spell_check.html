@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Spell Checker{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  {% if g.user %}
+  <form method="post">
+    <label for="inputtext">Input Text to Spell Check</label>
+    <input name="inputtext" id="inputtext" required>
+    <br>
+    <input type="submit" value="Check Spelling">
+  </form>
+  {% else %}
+  <a href="{{ url_for('auth.login') }}">Log In</a>
+  {% endif %}
+{% endblock %}

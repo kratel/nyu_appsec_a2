@@ -12,3 +12,9 @@ bp = Blueprint('spellcheck', __name__)
 @bp.route('/')
 def index():
     return render_template('spellcheck/index.html')
+
+
+@bp.route('/spell_check')
+@login_required
+def spell_check():
+    return render_template('spellcheck/spell_check.html')
