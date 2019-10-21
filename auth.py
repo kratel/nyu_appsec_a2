@@ -23,8 +23,10 @@ def register():
 
         if not username:
             error = 'Username is required.'
+            flash(error)
         elif not password:
             error = 'Password is required.'
+            flash(error)
         elif db.execute(
             'SELECT id FROM user WHERE username = ?', (username,)
         ).fetchone() is not None:
@@ -69,15 +71,29 @@ def login():
 
         if user is None:
             error = 'Invalid credentials.'
+            flash(error)
         elif not check_password_hash(user['password'], password):
             error = 'Invalid credentials.'
+            flash(error)
+
+        if user is not None:
+            if user['mfa_registered']:
+                mfa = request.form['2fa']
+                mfa_stored = db.execute(
+                    'SELECT * FROM mfa WHERE username = ?', (username,)
+                ).fetchone()
+                if mfa_stored is None:
+                    error = 'Corrupt state, contact site admin.'
+                    flash(error)
+                elif not mfa == mfa_stored['mfa_number']:
+                    error = 'Two-factor authentication failure.'
+                    flash(error)
 
         if error is None:
             session.clear()
             session['user_id'] = user['id']
-            return redirect(url_for('index'))
-
-        flash(error)
+            flash('Login success.')
+            return redirect(url_for('auth.login'))
 
     return render_template('auth/login.html')
 
