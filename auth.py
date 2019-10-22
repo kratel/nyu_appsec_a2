@@ -9,6 +9,7 @@ from db import get_db
 
 import sqlite3
 import forms
+import re
 
 bp = Blueprint('auth', __name__)
 
@@ -20,6 +21,7 @@ def register():
         username = form.username.data
         password = form.password.data
         mfa = form.mfa.data
+        mfa = re.sub(r"\D", "", mfa)
         db = get_db()
         error = None
 
@@ -82,6 +84,7 @@ def login():
         if user is not None:
             if user['mfa_registered']:
                 mfa = form.mfa.data
+                mfa = re.sub(r"\D", "", mfa)
                 mfa_stored = db.execute(
                     'SELECT * FROM mfa WHERE username = ?', (user['username'],)
                 ).fetchone()
