@@ -8,7 +8,7 @@
   {% if g.user %}
   <a href="{{ url_for('auth.logout') }}">Log Out</a>
   {% else %}
-  <form method="post">
+  <form action="/login" method="post">
     {{ form.username.label }} {{ form.username }}
     <br>
     {{ form.password.label }} {{ form.password }}
