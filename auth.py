@@ -62,9 +62,10 @@ def register():
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    form = forms.AuthForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
         db = get_db()
         error = None
         user = db.execute(
@@ -80,7 +81,7 @@ def login():
 
         if user is not None:
             if user['mfa_registered']:
-                mfa = request.form['2fa']
+                mfa = form.mfa.data
                 mfa_stored = db.execute(
                     'SELECT * FROM mfa WHERE username = ?', (username,)
                 ).fetchone()
@@ -97,7 +98,7 @@ def login():
             flash('Login success.')
             return redirect(url_for('auth.login'))
 
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', form=form)
 
 
 @bp.before_app_request

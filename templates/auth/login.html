@@ -9,17 +9,24 @@
   <a href="{{ url_for('auth.logout') }}">Log Out</a>
   {% else %}
   <form method="post">
-    <label for="username">Username</label>
-    <input name="username" id="uname" required>
+    {{ form.username.label }} {{ form.username }}
     <br>
-    <label for="password">Password</label>
-    <input type="password" name="password" id="pword" required>
+    {{ form.password.label }} {{ form.password }}
     <br>
-    <label for="2fa">2 Factor Authentication Device</label>
-    <input type="tel" name="2fa" id="2fa">
+    {{ form.mfa.label }} {{ form.mfa }}
     <br>
+    {{ form.csrf_token }}
     <input type="submit" value="Log In">
   </form>
+  {% endif %}
+  {% if form.errors %}
+    <ul class="errors" id="success">
+        {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+            {% for error in field_errors %}
+                <li>{{ form[field_name].label }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
   {% endif %}
   {% with messages = get_flashed_messages() %}
   {% if messages %}
