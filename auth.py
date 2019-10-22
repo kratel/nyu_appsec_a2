@@ -8,16 +8,18 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from db import get_db
 
 import sqlite3
+import forms
 
 bp = Blueprint('auth', __name__)
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
-    if request.method == 'POST':
+    form = forms.AuthForm()
+    if form.validate_on_submit():
     	# Validate and santize
-        username = request.form['username']
-        password = request.form['password']
-        mfa = request.form['2fa']
+        username = form.username.data
+        password = form.password.data
+        mfa = form.mfa.data
         db = get_db()
         error = None
 
@@ -55,7 +57,7 @@ def register():
                 flash('Registration failure.')
             return redirect(url_for('auth.register'))
 
-    return render_template('auth/register.html')
+    return render_template('auth/register.html', form=form)
 
 
 @bp.route('/login', methods=('GET', 'POST'))
