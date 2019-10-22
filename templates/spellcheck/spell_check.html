@@ -6,13 +6,31 @@
 
 {% block content %}
   {% if g.user %}
-  <form method="post">
-    <label for="inputtext">Input Text to Spell Check</label>
-    <input name="inputtext" id="inputtext" required>
+  <form action="/spell_check" method="post">
+    {{ form.inputtext.label }} {{ form.inputtext }}
     <br>
+    {{ form.csrf_token }}
     <input type="submit" value="Check Spelling">
   </form>
   {% else %}
   <a href="{{ url_for('auth.login') }}">Log In</a>
   {% endif %}
+  {% if form.errors %}
+    <ul class="errors" id="success">
+        {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+            {% for error in field_errors %}
+                <li>{{ form[field_name].label }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+  {% endif %}
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes id="success">
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  {% endwith %}
 {% endblock %}
