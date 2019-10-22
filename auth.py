@@ -83,12 +83,12 @@ def login():
             if user['mfa_registered']:
                 mfa = form.mfa.data
                 mfa_stored = db.execute(
-                    'SELECT * FROM mfa WHERE username = ?', (username,)
+                    'SELECT * FROM mfa WHERE username = ?', (user['username'],)
                 ).fetchone()
                 if mfa_stored is None:
                     error = 'Corrupt state, contact site admin.'
                     flash(error)
-                elif not mfa == mfa_stored['mfa_number']:
+                elif not int(mfa) == int(mfa_stored['mfa_number'].strip()):
                     error = 'Two-factor authentication failure.'
                     flash(error)
 
