@@ -24,6 +24,14 @@
         {% endfor %}
     </ul>
   {% endif %}
+  {% if results %}
+  <hr>
+  <div class="spell_results">
+    {% for key, value in results.items() %}
+    <p class="{{ key }}" id="{{ key }}">{{ value }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
   {% with messages = get_flashed_messages() %}
   {% if messages %}
     <ul class=flashes id="success">
