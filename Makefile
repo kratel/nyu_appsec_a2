@@ -11,3 +11,6 @@ coverage:
 
 report:
 	coverage report spellcheckapp/*.py
+
+report-html:
+	coverage html spellcheckapp/*.py
