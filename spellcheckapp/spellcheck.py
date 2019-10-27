@@ -3,14 +3,14 @@ from flask import (
 )
 from werkzeug.exceptions import abort
 
-from auth import login_required
-from db import get_db
-import forms
+from spellcheckapp.auth import login_required
+from spellcheckapp.db import get_db
+from spellcheckapp import forms
 from shlex import quote
 import subprocess
 import tempfile
 
-bp = Blueprint('spellcheck', __name__)
+bp = Blueprint('spellcheck', __name__, template_folder="templates")
 
 
 @bp.route('/')

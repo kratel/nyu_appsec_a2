@@ -3,3 +3,14 @@ get-deps:
 	sudo apt-get update
 	sudo apt-get install -y python3-pip
 
+test:
+	tox
+
+coverage:
+	coverage run -m unittest discover -v
+
+report:
+	coverage report spellcheckapp/*.py
+
+report-html:
+	coverage html spellcheckapp/*.py

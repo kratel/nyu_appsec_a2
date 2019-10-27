@@ -1,5 +1,6 @@
 beautifulsoup4==4.8.1
 Click==7.0
+coverage==4.5.4
 filelock==3.0.12
 Flask==1.1.1
 Flask-WTF==0.14.2

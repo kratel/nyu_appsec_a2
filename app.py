@@ -1,9 +1,7 @@
 import os
 
 from flask import Flask
-import db
-import auth
-import spellcheck
+from spellcheckapp import db, auth, spellcheck
 
 
 def create_app(test_config=None):

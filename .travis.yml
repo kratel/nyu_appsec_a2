@@ -1,11 +1,21 @@
 sudo: false
 language: python
+env:
+  global:
+    - CODECOV_TOKEN=5732b0fd-8991-4aa3-95e5-faa23803ffa7
 python:
   - "3.7"
   - "3.6"
 
 before_install:
   - make get-deps
+  - pip install codecov
+
+after_success:
+  - codecov
 
 install: pip install -r requirements.txt
-script: tox
+script:
+  - make test
+  - make coverage
+  - make report
