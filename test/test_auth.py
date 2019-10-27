@@ -4,9 +4,8 @@ import tempfile
 
 import bs4
 
-import auth
 import app
-from db import get_db
+from spellcheckapp.db import get_db
 from test.helpers import register, login, logout
 
 beautifulsoup = bs4.BeautifulSoup

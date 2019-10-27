@@ -5,13 +5,13 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from db import get_db
+from spellcheckapp.db import get_db
 
 import sqlite3
-import forms
+from spellcheckapp import forms
 import re
 
-bp = Blueprint('auth', __name__)
+bp = Blueprint('auth', __name__, template_folder="templates")
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():

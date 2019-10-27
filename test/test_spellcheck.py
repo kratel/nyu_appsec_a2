@@ -5,11 +5,9 @@ import pathlib
 
 import bs4
 
-import auth
-import spellcheck
 import app
 
-from db import get_db
+from spellcheckapp.db import get_db
 from test.helpers import register, login, logout, spell_check_text
 
 beautifulsoup = bs4.BeautifulSoup
