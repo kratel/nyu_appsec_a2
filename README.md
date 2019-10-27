@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.com/kratel/nyu_appsec_a2.svg?token=9hqx4ysaqwyc5JJXpgtm&branch=master)](https://travis-ci.com/kratel/nyu_appsec_a2)
 
+[![codecov](https://codecov.io/gh/kratel/nyu_appsec_a2/branch/master/graph/badge.svg?token=S6tquPAh6H)](https://codecov.io/gh/kratel/nyu_appsec_a2)
+
 A web service to run a spell checker.
 
 ## Usage
