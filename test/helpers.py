@@ -1,7 +1,7 @@
 def register(app, uname, pword, mfa="", csrf_token=""):
     pdata = { "username": uname,
               "password": pword,
-              "2fa": mfa,
+              "mfa": mfa,
               "csrf_token": csrf_token}
     return app.post(
         '/register',
@@ -12,7 +12,7 @@ def register(app, uname, pword, mfa="", csrf_token=""):
 def login(app, uname, pword, mfa="", csrf_token=""):
     pdata = { "username": uname,
               "password": pword,
-              "2fa": mfa,
+              "mfa": mfa,
               "csrf_token": csrf_token}
     return app.post(
         '/login',
