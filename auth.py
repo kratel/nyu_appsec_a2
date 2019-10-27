@@ -91,6 +91,9 @@ def login():
                 if mfa_stored is None:
                     error = 'Corrupt state, contact site admin.'
                     flash(error)
+                elif not mfa:
+                    error = 'Two-factor authentication failure.'
+                    flash(error)
                 elif not int(mfa) == int(mfa_stored['mfa_number'].strip()):
                     error = 'Two-factor authentication failure.'
                     flash(error)
