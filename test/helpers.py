@@ -4,20 +4,15 @@ def register(app, uname, pword, mfa="", csrf_token=""):
                   "password": pword,
                   "mfa": mfa,
                   "csrf_token": csrf_token}
-        return app.post(
-            '/register',
-            data=pdata,
-            follow_redirects=True
-        )
     else:
         pdata = { "username": uname,
                   "password": pword,
                   "csrf_token": csrf_token}
-        return app.post(
-            '/register',
-            data=pdata,
-            follow_redirects=True
-        )
+    return app.post(
+        '/register',
+        data=pdata,
+        follow_redirects=True
+    )
  
 def login(app, uname, pword, mfa="", csrf_token=""):
     if mfa:
@@ -25,23 +20,29 @@ def login(app, uname, pword, mfa="", csrf_token=""):
                   "password": pword,
                   "mfa": mfa,
                   "csrf_token": csrf_token}
-        return app.post(
-            '/login',
-            data=pdata,
-            follow_redirects=True
-        )
     else:
         pdata = { "username": uname,
                   "password": pword,
                   "csrf_token": csrf_token}
-        return app.post(
-            '/login',
-            data=pdata,
-            follow_redirects=True
-        )
+    return app.post(
+        '/login',
+        data=pdata,
+        follow_redirects=True
+    )
  
 def logout(app):
     return app.get(
         '/logout',
+        follow_redirects=True
+    )
+
+def spell_check_text(app, inputtext=""):
+    if inputtext:
+        pdata = { "inputtext": inputtext }
+    else:
+        pdata = {}
+    return app.post(
+        '/spell_check',
+        data=pdata,
         follow_redirects=True
     )
