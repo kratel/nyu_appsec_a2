@@ -1,22 +1,27 @@
-def register(self, uname, pword, mfa=""):
-    pdata = { "uname": uname,
-              "pword": pword,
-              "2fa": mfa}
-    return self.app.post(
+def register(app, uname, pword, mfa="", csrf_token=""):
+    pdata = { "username": uname,
+              "password": pword,
+              "2fa": mfa,
+              "csrf_token": csrf_token}
+    return app.post(
         '/register',
         data=pdata,
         follow_redirects=True
     )
  
-def login(self, email, password):
-    return self.app.post(
+def login(app, uname, pword, mfa="", csrf_token=""):
+    pdata = { "username": uname,
+              "password": pword,
+              "2fa": mfa,
+              "csrf_token": csrf_token}
+    return app.post(
         '/login',
-        data=dict(email=email, password=password),
+        data=pdata,
         follow_redirects=True
     )
  
-def logout(self):
-    return self.app.get(
+def logout(app):
+    return app.get(
         '/logout',
         follow_redirects=True
     )
