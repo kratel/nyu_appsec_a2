@@ -15,4 +15,6 @@ after_success:
   - codecov
 
 install: pip install -r requirements.txt
-script: tox
+script:
+  - make test
+  - make report
