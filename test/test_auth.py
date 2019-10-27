@@ -1,12 +1,13 @@
 import unittest
-import os
 import tempfile
-
 import bs4
+import os, sys
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
 
 import app
 from spellcheckapp.db import get_db
-from test.helpers import register, login, logout
+
 
 beautifulsoup = bs4.BeautifulSoup
 
@@ -28,6 +29,46 @@ class TestAuth(unittest.TestCase):
         os.close(self.db_fd)
         os.unlink(self.database_name)
 
+    ## Helper Funcs
+    def register(self, uname, pword, mfa="", csrf_token=""):
+        if mfa:
+            pdata = { "username": uname,
+                      "password": pword,
+                      "mfa": mfa,
+                      "csrf_token": csrf_token}
+        else:
+            pdata = { "username": uname,
+                      "password": pword,
+                      "csrf_token": csrf_token}
+        return self.app.post(
+            '/register',
+            data=pdata,
+            follow_redirects=True
+        )
+
+    def login(self, uname, pword, mfa="", csrf_token=""):
+        if mfa:
+            pdata = { "username": uname,
+                      "password": pword,
+                      "mfa": mfa,
+                      "csrf_token": csrf_token}
+        else:
+            pdata = { "username": uname,
+                      "password": pword,
+                      "csrf_token": csrf_token}
+        return self.app.post(
+            '/login',
+            data=pdata,
+            follow_redirects=True
+        )
+
+    def logout(self):
+        return self.app.get(
+            '/logout',
+            follow_redirects=True
+        )
+
+    ## Tests Start
     def test_register_get(self):
         response = self.app.get('/register', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
@@ -42,7 +83,7 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
         # Test Data Required Validators
-        response = register(app=self.app, uname='', pword='', mfa='', csrf_token='')
+        response = self.register(uname='', pword='', mfa='', csrf_token='')
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -57,7 +98,7 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
         # Test Regex Validators
-        response = register(app=self.app, uname='temp^1234', pword='temp123(<4', mfa='', csrf_token=csrf_token)
+        response = self.register(uname='temp^1234', pword='temp123(<4', mfa='', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -75,7 +116,7 @@ class TestAuth(unittest.TestCase):
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = register(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -93,11 +134,11 @@ class TestAuth(unittest.TestCase):
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = register(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         # Grab csrf token and try to register with the same username
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = register(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -118,7 +159,7 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
         # Test Data Required Validators
-        response = login(app=self.app, uname='', pword='', mfa='', csrf_token='')
+        response = self.login(uname='', pword='', mfa='', csrf_token='')
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -133,7 +174,7 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
         # Test Regex Validators
-        response = login(app=self.app, uname='temp^1234', pword='temp123(<4', mfa='', csrf_token=csrf_token)
+        response = self.login(uname='temp^1234', pword='temp123(<4', mfa='', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -152,7 +193,7 @@ class TestAuth(unittest.TestCase):
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = register(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -160,7 +201,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Login as a user
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = login(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.login(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
@@ -172,7 +213,7 @@ class TestAuth(unittest.TestCase):
         response = self.app.get('/login', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = login(app=self.app, uname='temp1234fake', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.login(uname='temp1234fake', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
@@ -183,7 +224,7 @@ class TestAuth(unittest.TestCase):
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = register(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -191,7 +232,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Login with wrong password
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = login(app=self.app, uname='temp1234', pword='oopswrongpassword', mfa='1234', csrf_token=csrf_token)
+        response = self.login(uname='temp1234', pword='oopswrongpassword', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
@@ -202,7 +243,7 @@ class TestAuth(unittest.TestCase):
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = register(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -210,14 +251,14 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Login without mfa
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = login(app=self.app, uname='temp1234', pword='temp1234', mfa='', csrf_token=csrf_token)
+        response = self.login(uname='temp1234', pword='temp1234', mfa='', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
         self.assertTrue(any("Two-factor authentication failure" in s.text for s in results))
         # Login with wrong mfa
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = login(app=self.app, uname='temp1234', pword='temp1234', mfa='12', csrf_token=csrf_token)
+        response = self.login(uname='temp1234', pword='temp1234', mfa='12', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
@@ -228,7 +269,7 @@ class TestAuth(unittest.TestCase):
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = register(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
@@ -236,14 +277,14 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Login as a user
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = login(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.login(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
         self.assertGreater(len(results), 0, "No flash messages received")
         self.assertTrue(any("Login success" in s.text for s in results))
         # Logout
-        response = logout(app=self.app)
+        response = self.logout()
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('p')
