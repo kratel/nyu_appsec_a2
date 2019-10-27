@@ -1,7 +1,7 @@
 import functools
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, flash, g, redirect, render_template, request, session, url_for, make_response
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -59,7 +59,9 @@ def register():
                 flash('Registration failure.')
             return redirect(url_for('auth.register'))
 
-    return render_template('auth/register.html', form=form)
+    render = make_response(render_template('auth/register.html', form=form))
+    render.headers.set('Content-Security-Policy', "default-src 'self'")
+    return render
 
 
 @bp.route('/login', methods=('GET', 'POST'))
@@ -104,7 +106,9 @@ def login():
             flash('Login success.')
             return redirect(url_for('auth.login'))
 
-    return render_template('auth/login.html', form=form)
+    render = make_response(render_template('auth/login.html', form=form))
+    render.headers.set('Content-Security-Policy', "default-src 'self'")
+    return render
 
 
 @bp.before_app_request

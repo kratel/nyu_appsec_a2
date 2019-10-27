@@ -1,5 +1,5 @@
 from flask import (
-	Blueprint, flash, g, redirect, render_template, request, url_for, current_app
+	Blueprint, flash, g, redirect, render_template, request, url_for, current_app, make_response
 )
 from werkzeug.exceptions import abort
 
@@ -15,7 +15,9 @@ bp = Blueprint('spellcheck', __name__, template_folder="templates")
 
 @bp.route('/')
 def index():
-	return render_template('spellcheck/index.html')
+	render = make_response(render_template('spellcheck/index.html'))
+	render.headers.set('Content-Security-Policy', "default-src 'self'")
+	return render
 
 
 @bp.route('/spell_check', methods=('GET', 'POST'))
@@ -53,4 +55,6 @@ def spell_check():
 			else:
 				results["no_misspelled"] = "No misspelled words were found."
 
-	return render_template('spellcheck/spell_check.html', form=form, results=results)
+	render = make_response(render_template('spellcheck/spell_check.html', form=form, results=results))
+	render.headers.set('Content-Security-Policy', "default-src 'self'")
+	return render
