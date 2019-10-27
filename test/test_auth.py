@@ -29,8 +29,11 @@ class TestAuth(unittest.TestCase):
 
 	def test_register_get(self):
 		response = self.app.get('/register', follow_redirects=True)
-		soup = beautifulsoup(response.data, 'html.parser')
 		self.assertEqual(response.status_code, 200)
+		soup = beautifulsoup(response.data, 'html.parser')
+		self.assertGreater(len(soup.find_all('input', id='uname')), 0, "No input with id 'uname' found.")
+		self.assertGreater(len(soup.find_all('input', id='pword')), 0, "No input with id 'pword' found.")
+		self.assertGreater(len(soup.find_all('input', id='2fa')), 0, "No input with id '2fa' found.")
 
 
 if __name__ == '__main__':
