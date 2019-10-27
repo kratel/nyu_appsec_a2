@@ -75,10 +75,10 @@ def login():
         ).fetchone()
 
         if user is None:
-            error = 'Invalid credentials.'
+            error = 'Invalid/Incorrect credentials.'
             flash(error)
         elif not check_password_hash(user['password'], password):
-            error = 'Invalid credentials.'
+            error = 'Invalid/Incorrect credentials.'
             flash(error)
 
         if user is not None:
