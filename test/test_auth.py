@@ -224,6 +224,32 @@ class TestAuth(unittest.TestCase):
         results = soup.find_all(id='result')
         self.assertTrue(any("Two-factor authentication failure" in s.text for s in results))
 
+    def test_logout(self):
+        # Register a user
+        response = self.app.get('/register', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = register(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='success')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Registration success" in s.text for s in results))
+        # Login as a user
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = login(app=self.app, uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='result')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Login success" in s.text for s in results))
+        # Logout
+        response = logout(app=self.app)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all('p')
+        self.assertTrue(any("Need to spell check some text?" in s.text for s in results))
+
 
 if __name__ == '__main__':
     unittest.main()
