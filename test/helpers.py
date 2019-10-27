@@ -36,11 +36,12 @@ def logout(app):
         follow_redirects=True
     )
 
-def spell_check_text(app, inputtext=""):
+def spell_check_text(app, inputtext="", csrf_token=""):
     if inputtext:
-        pdata = { "inputtext": inputtext }
+        pdata = { "inputtext": inputtext,
+                  "csrf_token": csrf_token}
     else:
-        pdata = {}
+        pdata = {"csrf_token": csrf_token}
     return app.post(
         '/spell_check',
         data=pdata,
