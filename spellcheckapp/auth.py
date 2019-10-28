@@ -17,7 +17,7 @@ bp = Blueprint('auth', __name__, template_folder="templates")
 def register():
     form = forms.AuthForm()
     if form.validate_on_submit():
-    	# Validate and santize
+        # Validate and santize
         username = form.username.data
         password = form.password.data
         mfa = form.mfa.data
@@ -61,6 +61,9 @@ def register():
 
     render = make_response(render_template('auth/register.html', form=form))
     render.headers.set('Content-Security-Policy', "default-src 'self'")
+    render.headers.set('X-Content-Type-Options', 'nosniff')
+    render.headers.set('X-Frame-Options', 'SAMEORIGIN')
+    render.headers.set('X-XSS-Protection', '1; mode=block')
     return render
 
 
@@ -108,6 +111,9 @@ def login():
 
     render = make_response(render_template('auth/login.html', form=form))
     render.headers.set('Content-Security-Policy', "default-src 'self'")
+    render.headers.set('X-Content-Type-Options', 'nosniff')
+    render.headers.set('X-Frame-Options', 'SAMEORIGIN')
+    render.headers.set('X-XSS-Protection', '1; mode=block')
     return render
 
 
