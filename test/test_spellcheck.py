@@ -23,7 +23,10 @@ class TestAuth(unittest.TestCase):
                         "TESTING": True,
                         "DATABASE": database_name,
                         "SPELLCHECK": spellcheck_path,
-                        "WORDLIST": wordlist_path}
+                        "WORDLIST": wordlist_path,
+                        "SESSION_COOKIE_HTTPONLY": True,
+                        "SESSION_COOKIE_SAMESITE":'Lax',
+                        "REMEMBER_COOKIE_HTTPONLY":True}
         base_app = app.create_app(test_config)
         self.app = base_app.test_client()
         self.db_fd = db_fd
