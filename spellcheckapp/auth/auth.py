@@ -8,10 +8,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from spellcheckapp.db import get_db
 
 import sqlite3
-from spellcheckapp import forms
+from spellcheckapp.auth import forms
 import re
 
-bp = Blueprint('auth', __name__, template_folder="templates")
+bp = Blueprint('auth', __name__, template_folder="../templates")
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
