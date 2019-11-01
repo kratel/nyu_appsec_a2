@@ -12,6 +12,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'spellchecker.sqlite'),
+        SQLALCHEMY_DATABASE_URI='sqlite:///' +  os.path.join(app.instance_path, 'spellchecker.sqlite'),
     )
 
     if test_config is None:
@@ -32,9 +33,16 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    with app.app_context():
-        db.init_db()
+    # Associate db with app
     db.init_app(app)
+    # Add the models so that create and drop all know which tables to manage
+    from spellcheckapp.auth.models import User, MFA
+    from spellcheckapp.spellcheck.models import Spell_checks
+
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+
 
     app.register_blueprint(auth.bp)
 

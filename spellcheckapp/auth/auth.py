@@ -5,10 +5,10 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from spellcheckapp.db import get_db
-
+from spellcheckapp import db
 import sqlite3
 from spellcheckapp.auth import forms
+from spellcheckapp.auth import models
 import re
 
 bp = Blueprint('auth', __name__, template_folder="../templates")
@@ -22,7 +22,6 @@ def register():
         password = form.password.data
         mfa = form.mfa.data
         mfa = re.sub(r"\D", "", mfa)
-        db = get_db()
         error = None
 
         if not username:
@@ -31,9 +30,7 @@ def register():
         elif not password:
             error = 'Password is required.'
             flash(error)
-        elif db.execute(
-            'SELECT id FROM user WHERE username = ?', (username,)
-        ).fetchone() is not None:
+        elif models.User.query.filter_by(username=username).first() is not None:
             error = 'Username is not available.'
             flash(error)
             flash('Registration failure.')
@@ -43,17 +40,13 @@ def register():
                 mfa_reg = 0;
             else:
                 mfa_reg = 1;
-            db.execute(
-                'INSERT INTO user (username, password, mfa_registered) VALUES (?, ?, ?)',
-                (username, generate_password_hash(password), mfa_reg)
-            )
+            new_user = models.User(username=username, password=generate_password_hash(password), mfa_registered=mfa_reg)
+            db.session.add(new_user)
             if mfa_reg:
-                db.execute(
-                    'INSERT INTO mfa (username, mfa_number) VALUES (?, ?)',
-                    (username, mfa)
-                )
+                new_mfa = models.MFA(username=username, mfa_number=mfa)
+                db.session.add(new_mfa)
             try:
-                db.commit()
+                db.session.commit()
                 flash('Registration success.')
             except sqlite3.Error as e:
                 flash('Registration failure.')
@@ -73,39 +66,34 @@ def login():
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
-        db = get_db()
         error = None
-        user = db.execute(
-            'SELECT * FROM user WHERE username = ?', (username,)
-        ).fetchone()
+        user = models.User.query.filter_by(username=username).first()
 
         if user is None:
             error = 'Invalid/Incorrect credentials.'
             flash(error)
-        elif not check_password_hash(user['password'], password):
+        elif not check_password_hash(user.password, password):
             error = 'Invalid/Incorrect credentials.'
             flash(error)
 
         if user is not None:
-            if user['mfa_registered']:
+            if user.mfa_registered:
                 mfa = form.mfa.data
                 mfa = re.sub(r"\D", "", mfa)
-                mfa_stored = db.execute(
-                    'SELECT * FROM mfa WHERE username = ?', (user['username'],)
-                ).fetchone()
+                mfa_stored = models.MFA.query.filter_by(username=username).first()
                 if mfa_stored is None:
                     error = 'Corrupt state, contact site admin.'
                     flash(error)
                 elif not mfa:
                     error = 'Two-factor authentication failure.'
                     flash(error)
-                elif not int(mfa) == int(mfa_stored['mfa_number'].strip()):
+                elif not int(mfa) == int(mfa_stored.mfa_number.strip()):
                     error = 'Two-factor authentication failure.'
                     flash(error)
 
         if error is None:
             session.clear()
-            session['user_id'] = user['id']
+            session['user_id'] = user.id
             flash('Login success.')
             return redirect(url_for('auth.login'))
 
@@ -124,9 +112,7 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = get_db().execute(
-            'SELECT * FROM user WHERE id = ?', (user_id,)
-        ).fetchone()
+        g.user = models.User.query.filter_by(id=user_id).first()
 
 
 @bp.route('/logout')

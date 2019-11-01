@@ -6,7 +6,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 import app
-from spellcheckapp.db import get_db
+from spellcheckapp.auth.models import MFA
 
 
 beautifulsoup = bs4.BeautifulSoup
@@ -14,9 +14,10 @@ beautifulsoup = bs4.BeautifulSoup
 class TestAuth(unittest.TestCase):
     def setUp(self):
         db_fd, database_name = tempfile.mkstemp()
+        print(database_name)
         test_config = { "SECRET_KEY":'test',
                         "TESTING": True,
-                        "DATABASE": database_name,
+                        "SQLALCHEMY_DATABASE_URI": 'sqlite:///' + database_name,
                         "SPELLCHECK":'./spell_check.out',
                         "WORDLIST":'wordlist.txt',
                         "SESSION_COOKIE_HTTPONLY": True,
@@ -127,10 +128,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Check that mfa was stored
         with self.base_app.app_context():
-            db = get_db()
-            mfa_stored = db.execute(
-                'SELECT * FROM mfa WHERE username = ?', ('temp1234',)
-            ).fetchone()
+            mfa_stored = MFA.query.filter_by(username='temp1234').first()
             self.assertFalse(mfa_stored is None)
 
     def test_register_repeated_username(self):
