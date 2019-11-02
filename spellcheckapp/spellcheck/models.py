@@ -1,13 +1,5 @@
-# from spellcheckapp.auth.models import db
 from spellcheckapp import db
 
-"""
-CREATE TABLE mfa (
-  username TEXT NOT NULL,
-  mfa_number TEXT NOT NULL,
-  FOREIGN KEY(username) REFERENCES user(username)
-);
-"""
 
 class Spell_checks(db.Model):
     id = db.Column(db.Integer, primary_key=True)
