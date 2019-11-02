@@ -1,5 +1,7 @@
 html { font-family: sans-serif; background: #eee; padding: 1rem; }
 body { max-width: 960px; margin: 0 auto; background: white; }
+table, th, td { border: 1px solid black; }
+th, td { padding: 1em; text-align: left; }
 h1 { font-family: serif; color: #cc0066; margin: 1rem 0; }
 a { color: #cc0066; }
 hr { border: none; border-top: 1px solid lightgray; }
