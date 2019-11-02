@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Spell Checker - Query Review{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <table class="query_review" >
+    <tr>
+      <th>Query ID</th>
+      <th>Username</th>
+      <th>Query Text</th>
+      <th>Query Result</th>
+    </tr>
+    <tr>
+      <td id="queryid">{{ query.id }}</td>
+      <td id="username">{{ query.username }}</td>
+      <td id="querytext">{{ query.submitted_text }}</td>
+      <td id="queryresults">{{ query.misspelled_words }}</td>
+    </tr>
+  </table>
+{% endblock %}

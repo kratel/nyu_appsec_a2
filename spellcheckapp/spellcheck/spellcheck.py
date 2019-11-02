@@ -110,7 +110,17 @@ def history():
     render.headers.set('X-XSS-Protection', '1; mode=block')
     return render
 
-@bp.route('/history/query<queryid>', methods=['GET'])
+@bp.route('/history/query<int:queryid>', methods=['GET'])
 @login_required
 def query(queryid):
-    abort(404)
+    query = models.Spell_checks.query.get(queryid)
+    if query is not None and ((g.user.is_admin) or (g.user.username == query.username)):
+        query
+        render = make_response(render_template('spellcheck/history_s_query.html', query=query))
+        render.headers.set('Content-Security-Policy', "default-src 'self'")
+        render.headers.set('X-Content-Type-Options', 'nosniff')
+        render.headers.set('X-Frame-Options', 'SAMEORIGIN')
+        render.headers.set('X-XSS-Protection', '1; mode=block')
+        return render
+    else:
+        abort(404)
