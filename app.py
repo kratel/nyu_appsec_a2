@@ -2,8 +2,9 @@ import os
 
 from flask import Flask
 from spellcheckapp import db
-from spellcheckapp.auth import auth
+from spellcheckapp.auth import auth, models
 from spellcheckapp.spellcheck import spellcheck
+from werkzeug.security import generate_password_hash
 
 
 def create_app(test_config=None):
@@ -42,6 +43,13 @@ def create_app(test_config=None):
     with app.app_context():
         db.drop_all()
         db.create_all()
+
+        # Create default admin
+        d_admin = models.User(username='admin', password=generate_password_hash('Administrator@1'), mfa_registered=True, is_admin=True)
+        d_admin_mfa = models.MFA(username='admin', mfa_number=12345678901)
+        db.session.add(d_admin)
+        db.session.add(d_admin_mfa)
+        db.session.commit()
 
 
     app.register_blueprint(auth.bp)

@@ -1,4 +1,3 @@
-# from flask_sqlalchemy import SQLAlchemy
 from spellcheckapp import db
 
 """
@@ -23,6 +22,7 @@ class User(db.Model):
     username = db.Column(db.String(20), unique=True, nullable=False)
     password = db.Column(db.String(20), unique=False, nullable=False)
     mfa_registered = db.Column(db.Boolean, unique=False, default=False)
+    is_admin = db.Column(db.Boolean, unique=False, default=False)
 
     def __repr__(self):
         return '<User %r>' % self.username
