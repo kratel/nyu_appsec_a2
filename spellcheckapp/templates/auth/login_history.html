@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Log In{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form action="/login_history" method="post">
+    {{ form.userid.label }} {{ form.userid }}
+    <br>
+    {{ form.csrf_token }}
+    <input type="submit" value="Check User Auth History">
+  </form>
+  {% if form.errors %}
+    <ul class="errors" id="success">
+        {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+            {% for error in field_errors %}
+                <li>{{ form[field_name].label }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+  {% endif %}
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes id="result">
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  {% endwith %}
+  {% if user_auth_history %}
+  <table class="auth_log" >
+    <tr>
+      <th>User ID</th>
+      <th>Username</th>
+      <th>Login ID</th>
+      <th>Login Time</th>
+      <th>Logout Time</th>
+    </tr>
+    {% for login in user_auth_history %}
+    <tr id="login{{ login.id }}">
+      <td id="login_userid">{{ login.userid }}</td>
+      <td id="login_username">{{ login.username }}</td>
+      <td id="login{{ login.id }}">{{ login.id }}</td>
+      <td id="login{{ login.id }}_time">{{ login.login_time }}</td>
+      {% if login.logout_time is none %}
+      <td id="logout{{ login.id }}_time">N/A.</td>
+      {% else %}
+      <td id="logout{{ login.id }}_time">{{ login.logout_time }}</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+{% endblock %}

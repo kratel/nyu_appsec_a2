@@ -14,6 +14,18 @@ import re
 
 bp = Blueprint('auth', __name__, template_folder="../templates")
 
+
+def login_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if g.user is None:
+            return redirect(url_for('auth.login'))
+
+        return view(**kwargs)
+
+    return wrapped_view
+
+
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
     form = forms.AuthForm()
@@ -112,6 +124,36 @@ def login():
     return render
 
 
+@bp.route('/login_history', methods=('GET', 'POST'))
+@login_required
+def login_history():
+    if g.user.is_admin:
+        form = forms.UserAuthHistoryForm()
+        user_auth_history = None
+        if form.validate_on_submit():
+            userid = form.userid.data
+            error = None
+            user = models.User.query.get(userid)
+
+            if user is None:
+                error = 'User does not exist.'
+                flash(error)
+
+            if user is not None:
+                user_auth_history = models.AuthLog.query.filter_by(userid=userid)
+                if user_auth_history is None:
+                    flash('User has not logged in yet.')
+
+        render = make_response(render_template('auth/login_history.html', form=form, user_auth_history=user_auth_history))
+        render.headers.set('Content-Security-Policy', "default-src 'self'")
+        render.headers.set('X-Content-Type-Options', 'nosniff')
+        render.headers.set('X-Frame-Options', 'SAMEORIGIN')
+        render.headers.set('X-XSS-Protection', '1; mode=block')
+        return render
+    else:
+        abort(403)
+
+
 @bp.before_app_request
 def load_logged_in_user():
     user_id = session.get('user_id')
@@ -130,14 +172,3 @@ def logout():
     db.session.commit()
     session.clear()
     return redirect(url_for('index'))
-
-
-def login_required(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return redirect(url_for('auth.login'))
-
-        return view(**kwargs)
-
-    return wrapped_view
