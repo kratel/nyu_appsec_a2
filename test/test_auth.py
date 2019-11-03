@@ -14,7 +14,6 @@ beautifulsoup = bs4.BeautifulSoup
 class TestAuth(unittest.TestCase):
     def setUp(self):
         db_fd, database_name = tempfile.mkstemp()
-        print(database_name)
         test_config = { "SECRET_KEY":'test',
                         "TESTING": True,
                         "SQLALCHEMY_DATABASE_URI": 'sqlite:///' + database_name,
@@ -107,8 +106,8 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
         self.assertTrue(any(("Auth failure" in s.text) for s in results))
-        self.assertTrue(any(("Invalid char in password or not between 8 - 20 chars" in s.text) for s in results))
-        self.assertTrue(any(("Invalid char in username or not between 8 - 20 chars" in s.text) for s in results))
+        self.assertTrue(any(("Invalid char in password or not between" in s.text) for s in results))
+        self.assertTrue(any(("Invalid char in username or not between" in s.text) for s in results))
 
     def test_register_csrf(self):
         response = self.app.get('/register', follow_redirects=True)
@@ -180,8 +179,8 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
         self.assertTrue(any(("Auth failure" in s.text) for s in results))
-        self.assertTrue(any(("Invalid char in password or not between 8 - 20 chars" in s.text) for s in results))
-        self.assertTrue(any(("Invalid char in username or not between 8 - 20 chars" in s.text) for s in results))
+        self.assertTrue(any(("Invalid char in password or not between" in s.text) for s in results))
+        self.assertTrue(any(("Invalid char in username or not between" in s.text) for s in results))
 
     def test_login_csrf(self):
         response = self.app.get('/login', follow_redirects=True)

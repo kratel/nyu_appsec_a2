@@ -121,7 +121,7 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('title')
-        self.assertTrue(any(("Spell Checker - Spell Checker" in s.text) for s in results))
+        self.assertTrue(any(("Spell Checker - Submission" in s.text) for s in results))
         self.assertGreater(len(soup.find_all('textarea', id="inputtext")), 0, "No textarea with id 'inputtext' found.")
 
     def test_spell_check_csrf(self):
@@ -174,7 +174,7 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('title')
-        self.assertTrue(any(("Spell Checker - Spell Checker" in s.text) for s in results))
+        self.assertTrue(any(("Spell Checker - Submission" in s.text) for s in results))
         self.assertGreater(len(soup.find_all('textarea', id="inputtext")), 0, "No textarea with id 'inputtext' found.")
         # Submit some text to spell checker
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
@@ -213,7 +213,7 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('title')
-        self.assertTrue(any(("Spell Checker - Spell Checker" in s.text) for s in results))
+        self.assertTrue(any(("Spell Checker - Submission" in s.text) for s in results))
         self.assertGreater(len(soup.find_all('textarea', id="inputtext")), 0, "No textarea with id 'inputtext' found.")
         # Submit some text to spell checker
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
