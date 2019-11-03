@@ -1,10 +1,14 @@
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 from spellcheckapp import db
 from spellcheckapp.auth import auth, models
 from spellcheckapp.spellcheck import spellcheck
 from werkzeug.security import generate_password_hash
+
+
+def page_not_found(e):
+  return render_template('404.html'), 404
 
 
 def create_app(test_config=None):
@@ -56,6 +60,7 @@ def create_app(test_config=None):
 
     app.register_blueprint(spellcheck.bp)
     app.add_url_rule('/', endpoint='index')
+    app.register_error_handler(404, page_not_found)
 
     return app
 
