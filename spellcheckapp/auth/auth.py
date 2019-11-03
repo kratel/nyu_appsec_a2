@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from spellcheckapp import db
 import sqlite3
+import datetime
 from spellcheckapp.auth import forms
 from spellcheckapp.auth import models
 import re
@@ -94,6 +95,10 @@ def login():
         if error is None:
             session.clear()
             session['user_id'] = user.id
+            new_login = models.AuthLog(username=username,login_time=datetime.datetime.now())
+            db.session.add(new_login)
+            db.session.commit()
+            session['login_id'] = new_login.id
             flash('Login success.')
             return redirect(url_for('auth.login'))
 
@@ -117,6 +122,10 @@ def load_logged_in_user():
 
 @bp.route('/logout')
 def logout():
+    login_id = session.get('login_id')
+    login_log = models.AuthLog.query.get(login_id)
+    login_log.logout_time = datetime.datetime.now()
+    db.session.commit()
     session.clear()
     return redirect(url_for('index'))
 
