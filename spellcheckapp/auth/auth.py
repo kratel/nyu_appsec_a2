@@ -29,41 +29,42 @@ def login_required(view):
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
     form = forms.AuthForm()
-    if form.validate_on_submit():
-        # Validate and santize
-        username = form.username.data
-        password = form.password.data
-        mfa = form.mfa.data
-        mfa = re.sub(r"\D", "", mfa)
-        error = None
+    if g.user is None:
+        if form.validate_on_submit():
+            # Validate and santize
+            username = form.username.data
+            password = form.password.data
+            mfa = form.mfa.data
+            mfa = re.sub(r"\D", "", mfa)
+            error = None
 
-        if not username:
-            error = 'Username is required.'
-            flash(error)
-        elif not password:
-            error = 'Password is required.'
-            flash(error)
-        elif models.User.query.filter_by(username=username).first() is not None:
-            error = 'Username is not available.'
-            flash(error)
-            flash('Registration failure.')
-
-        if error is None:
-            if (mfa is None) or (mfa == ''):
-                mfa_reg = 0;
-            else:
-                mfa_reg = 1;
-            new_user = models.User(username=username, password=generate_password_hash(password), mfa_registered=mfa_reg)
-            db.session.add(new_user)
-            if mfa_reg:
-                new_mfa = models.MFA(username=username, mfa_number=mfa)
-                db.session.add(new_mfa)
-            try:
-                db.session.commit()
-                flash('Registration success.')
-            except sqlite3.Error as e:
+            if not username:
+                error = 'Username is required.'
+                flash(error)
+            elif not password:
+                error = 'Password is required.'
+                flash(error)
+            elif models.User.query.filter_by(username=username).first() is not None:
+                error = 'Username is not available.'
+                flash(error)
                 flash('Registration failure.')
-            return redirect(url_for('auth.register'))
+
+            if error is None:
+                if (mfa is None) or (mfa == ''):
+                    mfa_reg = 0;
+                else:
+                    mfa_reg = 1;
+                new_user = models.User(username=username, password=generate_password_hash(password), mfa_registered=mfa_reg)
+                db.session.add(new_user)
+                if mfa_reg:
+                    new_mfa = models.MFA(username=username, mfa_number=mfa)
+                    db.session.add(new_mfa)
+                try:
+                    db.session.commit()
+                    flash('Registration success.')
+                except sqlite3.Error as e:
+                    flash('Registration failure.')
+                return redirect(url_for('auth.register'))
 
     render = make_response(render_template('auth/register.html', form=form))
     render.headers.set('Content-Security-Policy', "default-src 'self'")
@@ -76,43 +77,44 @@ def register():
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     form = forms.AuthForm()
-    if form.validate_on_submit():
-        username = form.username.data
-        password = form.password.data
-        error = None
-        user = models.User.query.filter_by(username=username).first()
+    if g.user is None:
+        if form.validate_on_submit():
+            username = form.username.data
+            password = form.password.data
+            error = None
+            user = models.User.query.filter_by(username=username).first()
 
-        if user is None:
-            error = 'Invalid/Incorrect credentials.'
-            flash(error)
-        elif not check_password_hash(user.password, password):
-            error = 'Invalid/Incorrect credentials.'
-            flash(error)
+            if user is None:
+                error = 'Invalid/Incorrect credentials.'
+                flash(error)
+            elif not check_password_hash(user.password, password):
+                error = 'Invalid/Incorrect credentials.'
+                flash(error)
 
-        if user is not None:
-            if user.mfa_registered:
-                mfa = form.mfa.data
-                mfa = re.sub(r"\D", "", mfa)
-                mfa_stored = models.MFA.query.filter_by(username=username).first()
-                if mfa_stored is None:
-                    error = 'Corrupt state, contact site admin.'
-                    flash(error)
-                elif not mfa:
-                    error = 'Two-factor authentication failure.'
-                    flash(error)
-                elif not int(mfa) == int(mfa_stored.mfa_number.strip()):
-                    error = 'Two-factor authentication failure.'
-                    flash(error)
+            if user is not None:
+                if user.mfa_registered:
+                    mfa = form.mfa.data
+                    mfa = re.sub(r"\D", "", mfa)
+                    mfa_stored = models.MFA.query.filter_by(username=username).first()
+                    if mfa_stored is None:
+                        error = 'Corrupt state, contact site admin.'
+                        flash(error)
+                    elif not mfa:
+                        error = 'Two-factor authentication failure.'
+                        flash(error)
+                    elif not int(mfa) == int(mfa_stored.mfa_number.strip()):
+                        error = 'Two-factor authentication failure.'
+                        flash(error)
 
-        if error is None:
-            session.clear()
-            session['user_id'] = user.id
-            new_login = models.AuthLog(userid=user.id, username=username,login_time=datetime.datetime.now())
-            db.session.add(new_login)
-            db.session.commit()
-            session['login_id'] = new_login.id
-            flash('Login success.')
-            return redirect(url_for('auth.login'))
+            if error is None:
+                session.clear()
+                session['user_id'] = user.id
+                new_login = models.AuthLog(userid=user.id, username=username,login_time=datetime.datetime.now())
+                db.session.add(new_login)
+                db.session.commit()
+                session['login_id'] = new_login.id
+                flash('Login success.')
+                return redirect(url_for('auth.login'))
 
     render = make_response(render_template('auth/login.html', form=form))
     render.headers.set('Content-Security-Policy', "default-src 'self'")
