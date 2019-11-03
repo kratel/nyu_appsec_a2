@@ -49,7 +49,7 @@ def spell_check():
                 inputfile.write(inputtext)
                 inputfile.flush()
                 with tempfile.TemporaryFile() as tempf:
-                    proc = subprocess.Popen([current_app.config['SPELLCHECK'], current_app.config['WORDLIST'], inputfile.name], stdout=tempf)
+                    proc = subprocess.Popen([current_app.config['SPELLCHECK'], inputfile.name, current_app.config['WORDLIST']], stdout=tempf)
                     proc.wait()
                     tempf.seek(0)
                     result = tempf.read()

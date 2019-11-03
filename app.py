@@ -17,6 +17,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'spellchecker.sqlite'),
+        SPELLCHECK='./a.out',
+        WORDLIST='wordlist.txt',
         SQLALCHEMY_DATABASE_URI='sqlite:///' +  os.path.join(app.instance_path, 'spellchecker.sqlite'),
     )
 
