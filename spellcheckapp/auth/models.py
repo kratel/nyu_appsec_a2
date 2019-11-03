@@ -19,3 +19,12 @@ class MFA(db.Model):
 
     def __repr__(self):
         return '<MFA_User %r' % self.username
+
+
+class AuthLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
+    login_time = db.Column(db.DateTime(), nullable=False)
+    logout_time = db.Column(db.DateTime(), nullable=True)
+    def __repr__(self):
+        return '<AuthLog %r' % self.id
