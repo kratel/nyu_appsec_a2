@@ -11,9 +11,10 @@ class User(db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
+
 class MFA(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Integer, db.ForeignKey('user.username'), nullable=False)
+    username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
     mfa_number = db.Column(db.String(20), unique=False, nullable=False)
 
     def __repr__(self):
