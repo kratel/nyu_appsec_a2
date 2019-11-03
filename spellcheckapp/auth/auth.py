@@ -97,7 +97,7 @@ def login():
             if error is None:
                 session.clear()
                 session['user_id'] = user.id
-                new_login = models.AuthLog(username=username,login_time=datetime.datetime.now())
+                new_login = models.AuthLog(userid=user.id, username=username,login_time=datetime.datetime.now())
                 db.session.add(new_login)
                 db.session.commit()
                 session['login_id'] = new_login.id

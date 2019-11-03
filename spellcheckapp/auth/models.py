@@ -23,6 +23,7 @@ class MFA(db.Model):
 
 class AuthLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    userid = db.Column(db.Integer, db.ForeignKey('user.id'))
     username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
     login_time = db.Column(db.DateTime(), nullable=False)
     logout_time = db.Column(db.DateTime(), nullable=True)
