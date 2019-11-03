@@ -37,7 +37,9 @@
   {% if queryhistory %}
   <hr>
   <h2>Query History for: {{ username }}</h2>
-  <h3 id="numqueries">Total number of queries: {{ numqueries }}</h3>
+  <h3 id="numqueries">{{ numqueries }}</h3>
+  <p>Queries found</p>
+  <hr>
   <div class="queryhistory" id="queryhistory">
     {% for query in queryhistory %}
     <a id="query{{ query.id }}" href="{{ url_for('spellcheck.query', queryid=query.id) }}">Query {{ query.id }}</a>
@@ -45,7 +47,9 @@
   </div>
   {% else %}
   <hr>
-  <h2 id="numqueries">Total number of queries: 0</h2>
+  <h2 id="numqueries">0</h2>
+  <p>Queries found</p>
+  <hr>
   <p>No queries found.</p>
   {% endif %}
   {% else %}
