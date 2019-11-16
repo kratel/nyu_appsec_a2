@@ -1,7 +1,14 @@
 import os
 
-from flask import Flask
-from spellcheckapp import db, auth, spellcheck
+from flask import Flask, render_template
+from spellcheckapp import db
+from spellcheckapp.auth import auth, models
+from spellcheckapp.spellcheck import spellcheck
+from werkzeug.security import generate_password_hash
+
+
+def page_not_found(e):
+  return render_template('404.html'), 404
 
 
 def create_app(test_config=None):
@@ -10,6 +17,9 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'spellchecker.sqlite'),
+        SPELLCHECK='./a.out',
+        WORDLIST='wordlist.txt',
+        SQLALCHEMY_DATABASE_URI='sqlite:///' +  os.path.join(app.instance_path, 'spellchecker.sqlite'),
     )
 
     if test_config is None:
@@ -30,14 +40,29 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    with app.app_context():
-        db.init_db()
+    # Associate db with app
     db.init_app(app)
+    # Add the models so that create and drop all know which tables to manage
+    from spellcheckapp.auth.models import User, MFA
+    from spellcheckapp.spellcheck.models import Spell_checks
+
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+
+        # Create default admin
+        d_admin = models.User(username='admin', password=generate_password_hash('Administrator@1'), mfa_registered=True, is_admin=True)
+        d_admin_mfa = models.MFA(username='admin', mfa_number=12345678901)
+        db.session.add(d_admin)
+        db.session.add(d_admin_mfa)
+        db.session.commit()
+
 
     app.register_blueprint(auth.bp)
 
     app.register_blueprint(spellcheck.bp)
     app.add_url_rule('/', endpoint='index')
+    app.register_error_handler(404, page_not_found)
 
     return app
 

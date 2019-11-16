@@ -51,7 +51,7 @@ SESSION_COOKIE_SAMESITE='Lax'
 REMEMBER_COOKIE_HTTPONLY=True
 ```
 
-*Note: This web service also assumes that the spell check executable provided is called with the wordlist as the first argument. e.g. `./a.out wordlist.txt input.txt`*
+*Note: This web service also assumes that the spell check executable provided is called with the input text as the first argument. e.g. `./a.out input.txt wordlist.txt`*
 
 ### Testing
 

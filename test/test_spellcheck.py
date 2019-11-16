@@ -9,7 +9,7 @@ import bs4
 
 import app
 
-from spellcheckapp.db import get_db
+from spellcheckapp import db
 
 beautifulsoup = bs4.BeautifulSoup
 
@@ -21,7 +21,7 @@ class TestAuth(unittest.TestCase):
         db_fd, database_name = tempfile.mkstemp()
         test_config = { "SECRET_KEY":'test',
                         "TESTING": True,
-                        "DATABASE": database_name,
+                        "SQLALCHEMY_DATABASE_URI": 'sqlite:///' + database_name,
                         "SPELLCHECK": spellcheck_path,
                         "WORDLIST": wordlist_path,
                         "SESSION_COOKIE_HTTPONLY": True,
@@ -121,7 +121,7 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('title')
-        self.assertTrue(any(("Spell Checker - Spell Checker" in s.text) for s in results))
+        self.assertTrue(any(("Spell Checker - Submission" in s.text) for s in results))
         self.assertGreater(len(soup.find_all('textarea', id="inputtext")), 0, "No textarea with id 'inputtext' found.")
 
     def test_spell_check_csrf(self):
@@ -174,7 +174,7 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('title')
-        self.assertTrue(any(("Spell Checker - Spell Checker" in s.text) for s in results))
+        self.assertTrue(any(("Spell Checker - Submission" in s.text) for s in results))
         self.assertGreater(len(soup.find_all('textarea', id="inputtext")), 0, "No textarea with id 'inputtext' found.")
         # Submit some text to spell checker
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
@@ -213,7 +213,7 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('title')
-        self.assertTrue(any(("Spell Checker - Spell Checker" in s.text) for s in results))
+        self.assertTrue(any(("Spell Checker - Submission" in s.text) for s in results))
         self.assertGreater(len(soup.find_all('textarea', id="inputtext")), 0, "No textarea with id 'inputtext' found.")
         # Submit some text to spell checker
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']

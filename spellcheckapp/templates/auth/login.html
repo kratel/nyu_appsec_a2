@@ -20,7 +20,7 @@
   </form>
   {% endif %}
   {% if form.errors %}
-    <ul class="errors" id="success">
+    <ul class="errors" id="result">
         {% for field_name, field_errors in form.errors|dictsort if field_errors %}
             {% for error in field_errors %}
                 <li>{{ form[field_name].label }}: {{ error }}</li>
@@ -30,7 +30,7 @@
   {% endif %}
   {% with messages = get_flashed_messages() %}
   {% if messages %}
-    <ul class=flashes id="result">
+    <ul class="flashes" id="result">
     {% for message in messages %}
       <li>{{ message }}</li>
     {% endfor %}

@@ -6,7 +6,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 import app
-from spellcheckapp.db import get_db
+from spellcheckapp.auth.models import MFA
 
 
 beautifulsoup = bs4.BeautifulSoup
@@ -16,7 +16,7 @@ class TestAuth(unittest.TestCase):
         db_fd, database_name = tempfile.mkstemp()
         test_config = { "SECRET_KEY":'test',
                         "TESTING": True,
-                        "DATABASE": database_name,
+                        "SQLALCHEMY_DATABASE_URI": 'sqlite:///' + database_name,
                         "SPELLCHECK":'./spell_check.out',
                         "WORDLIST":'wordlist.txt',
                         "SESSION_COOKIE_HTTPONLY": True,
@@ -71,6 +71,18 @@ class TestAuth(unittest.TestCase):
             follow_redirects=True
         )
 
+    def query_userid_history(self, userid=None, csrf_token=""):
+        if userid:
+            pdata = { "userid": userid,
+                      "csrf_token": csrf_token}
+        else:
+            pdata = {"csrf_token": csrf_token}
+        return self.app.post(
+            '/login_history',
+            data=pdata,
+            follow_redirects=True
+        )
+
     ## Tests Start
     def test_register_get(self):
         response = self.app.get('/register', follow_redirects=True)
@@ -106,8 +118,8 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='success')
         self.assertTrue(any(("Auth failure" in s.text) for s in results))
-        self.assertTrue(any(("Invalid char in password or not between 8 - 20 chars" in s.text) for s in results))
-        self.assertTrue(any(("Invalid char in username or not between 8 - 20 chars" in s.text) for s in results))
+        self.assertTrue(any(("Invalid char in password or not between" in s.text) for s in results))
+        self.assertTrue(any(("Invalid char in username or not between" in s.text) for s in results))
 
     def test_register_csrf(self):
         response = self.app.get('/register', follow_redirects=True)
@@ -127,10 +139,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Check that mfa was stored
         with self.base_app.app_context():
-            db = get_db()
-            mfa_stored = db.execute(
-                'SELECT * FROM mfa WHERE username = ?', ('temp1234',)
-            ).fetchone()
+            mfa_stored = MFA.query.filter_by(username='temp1234').first()
             self.assertFalse(mfa_stored is None)
 
     def test_register_repeated_username(self):
@@ -165,7 +174,7 @@ class TestAuth(unittest.TestCase):
         response = self.login(uname='', pword='', mfa='', csrf_token='')
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
-        results = soup.find_all(id='success')
+        results = soup.find_all(id='result')
         self.assertGreater(len(results), 0, "No flash messages received")
         self.assertTrue(any(("This field is required" in s.text) and ("Username" in s.text) for s in results))
         self.assertTrue(any(("This field is required" in s.text) and ("Password" in s.text) for s in results))
@@ -180,10 +189,10 @@ class TestAuth(unittest.TestCase):
         response = self.login(uname='temp^1234', pword='temp123(<4', mfa='', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
-        results = soup.find_all(id='success')
+        results = soup.find_all(id='result')
         self.assertTrue(any(("Auth failure" in s.text) for s in results))
-        self.assertTrue(any(("Invalid char in password or not between 8 - 20 chars" in s.text) for s in results))
-        self.assertTrue(any(("Invalid char in username or not between 8 - 20 chars" in s.text) for s in results))
+        self.assertTrue(any(("Invalid char in password or not between" in s.text) for s in results))
+        self.assertTrue(any(("Invalid char in username or not between" in s.text) for s in results))
 
     def test_login_csrf(self):
         response = self.app.get('/login', follow_redirects=True)
@@ -292,6 +301,32 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('p')
         self.assertTrue(any("Need to spell check some text?" in s.text for s in results))
+
+    def test_login_history(self):
+        response = self.app.get('/login', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        # Login as default admin
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.login(uname='admin', pword='Administrator@1', mfa='12345678901', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='result')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Login success" in s.text for s in results))
+        # Check out login history page
+        response = self.app.get('/login_history', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        userid_to_query = 1
+        response = self.query_userid_history(userid=userid_to_query, csrf_token=csrf_token)
+        soup = beautifulsoup(response.data, 'html.parser')
+        self.assertEqual(response.status_code, 200)
+        login_userid_entry = int(soup.find_all('td', id='login_userid')[0].text)
+        self.assertEqual(userid_to_query, login_userid_entry, "Retrieved history does not match userid queried.")
+        self.assertGreater(len(soup.find_all('td', id='login_username')), 0, "No column entry with id 'login_username' found.")
+        self.assertGreater(len(soup.find_all('td', id='login1')), 0, "No column entry with id 'login1' found.")
+        self.assertGreater(len(soup.find_all('td', id='login1_time')), 0, "No column entry with id 'login1_time' found.")
+        self.assertGreater(len(soup.find_all('td', id='logout1_time')), 0, "No column entry with id 'logout1_time' found.")
 
 
 if __name__ == '__main__':
