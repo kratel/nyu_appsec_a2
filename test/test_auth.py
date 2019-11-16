@@ -71,6 +71,18 @@ class TestAuth(unittest.TestCase):
             follow_redirects=True
         )
 
+    def query_userid_history(self, userid=None, csrf_token=""):
+        if userid:
+            pdata = { "userid": userid,
+                      "csrf_token": csrf_token}
+        else:
+            pdata = {"csrf_token": csrf_token}
+        return self.app.post(
+            '/login_history',
+            data=pdata,
+            follow_redirects=True
+        )
+
     ## Tests Start
     def test_register_get(self):
         response = self.app.get('/register', follow_redirects=True)
@@ -289,6 +301,32 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all('p')
         self.assertTrue(any("Need to spell check some text?" in s.text for s in results))
+
+    def test_login_history(self):
+        response = self.app.get('/login', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        # Login as default admin
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.login(uname='admin', pword='Administrator@1', mfa='12345678901', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='result')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Login success" in s.text for s in results))
+        # Check out login history page
+        response = self.app.get('/login_history', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        userid_to_query = 1
+        response = self.query_userid_history(userid=userid_to_query, csrf_token=csrf_token)
+        soup = beautifulsoup(response.data, 'html.parser')
+        self.assertEqual(response.status_code, 200)
+        login_userid_entry = int(soup.find_all('td', id='login_userid')[0].text)
+        self.assertEqual(userid_to_query, login_userid_entry, "Retrieved history does not match userid queried.")
+        self.assertGreater(len(soup.find_all('td', id='login_username')), 0, "No column entry with id 'login_username' found.")
+        self.assertGreater(len(soup.find_all('td', id='login1')), 0, "No column entry with id 'login1' found.")
+        self.assertGreater(len(soup.find_all('td', id='login1_time')), 0, "No column entry with id 'login1_time' found.")
+        self.assertGreater(len(soup.find_all('td', id='logout1_time')), 0, "No column entry with id 'logout1_time' found.")
 
 
 if __name__ == '__main__':
