@@ -12,7 +12,7 @@ coverage:
 	coverage run -m unittest discover -v
 
 report:
-	coverage report spellcheckapp/*.py
+	coverage report spellcheckapp/*/*.py
 
 report-html:
-	coverage html spellcheckapp/*.py
+	coverage html spellcheckapp/*/*.py
