@@ -59,7 +59,6 @@ def create_app(test_config=None):
             db.session.commit()
         except KeyError as e:
             print("Admin credentials must be defined in config")
-            raise e
 
 
     app.register_blueprint(auth.bp)
