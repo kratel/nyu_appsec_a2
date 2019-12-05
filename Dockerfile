@@ -8,6 +8,7 @@ RUN pip install --upgrade pip && \
 
 COPY app.py /opt/web/
 COPY spell_check.out /opt/web/
+COPY wordlist.txt /opt/web/
 COPY spellcheckapp /opt/web/spellcheckapp
 
 WORKDIR /opt/web
