@@ -50,12 +50,16 @@ def create_app(test_config=None):
         db.drop_all()
         db.create_all()
 
-        # Create default admin
-        d_admin = models.User(username='admin', password=generate_password_hash('Administrator@1'), mfa_registered=True, is_admin=True)
-        d_admin_mfa = models.MFA(username='admin', mfa_number=12345678901)
-        db.session.add(d_admin)
-        db.session.add(d_admin_mfa)
-        db.session.commit()
+        try:
+            # Create default admin
+            d_admin = models.User(username=app.config['ADMIN_USERNAME'], password=generate_password_hash(app.config['ADMIN_PASSWORD']), mfa_registered=True, is_admin=True)
+            d_admin_mfa = models.MFA(username=app.config['ADMIN_USERNAME'], mfa_number=app.config['ADMIN_MFA'])
+            db.session.add(d_admin)
+            db.session.add(d_admin_mfa)
+            db.session.commit()
+        except KeyError as e:
+            print("Admin credentials must be defined in config")
+            raise e
 
 
     app.register_blueprint(auth.bp)
