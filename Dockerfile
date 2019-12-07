@@ -6,6 +6,9 @@ WORKDIR /tmp
 RUN pip install --upgrade pip && \
 	pip install -r requirements.txt
 
+RUN apt-get update && \
+	apt-get install -y postgresql-client libpq-dev python-dev
+
 COPY app.py /opt/web/
 COPY spell_check.out /opt/web/
 COPY wordlist.txt /opt/web/
