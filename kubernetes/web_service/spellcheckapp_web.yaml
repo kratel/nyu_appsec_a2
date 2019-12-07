@@ -28,7 +28,7 @@ spec:
         volumeMounts:
         - name: secret-config
           mountPath: "/etc/opt/web/instance"
-          readOnly: false
+          readOnly: true
         ports:
         - containerPort: 8080
         lifecycle:
