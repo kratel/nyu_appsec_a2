@@ -20,6 +20,9 @@ def create_app(test_config=None):
         SPELLCHECK='./a.out',
         WORDLIST='wordlist.txt',
         SQLALCHEMY_DATABASE_URI='sqlite:///' +  os.path.join(app.instance_path, 'spellchecker.sqlite'),
+        ADMIN_USERNAME='replaceme',
+        ADMIN_PASSWORD='replaceme',
+        ADMIN_MFA=1234,
     )
 
     if test_config is None:
