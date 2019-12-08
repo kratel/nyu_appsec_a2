@@ -76,7 +76,10 @@ If you would like to create html pages from your reports you may then call `make
 
 ## Docker
 
-In the root directory of this repo you can see the [Dockerfile](Dockerfile) and [docker-compose.yaml](docker-compose.yaml) files. These can be used to build a docker image of this app. This image will be defaulting to the sqlite database and have no default admin account setup.
+In the root directory of this repo you can see the [Dockerfile](Dockerfile) and [docker-compose.yaml](docker-compose.yaml) files. These can be used to build a docker image of this app. This image will be defaulting to the sqlite database and have a default admin account setup using the dev credentials. **Be sure to note the additional files to include that are listed at the top of this README.** If you want to configure the app in this image (and don't plan to use kubernetes) do the following:
+To use your own config create a `config.py` file in the root directory and uncomment line 16 in [Dockerfile](Dockerfile#L16) for it to be copied over in the docker image.
+
+If you plan to use this image as part of a kubernetes deployment the configuration will be implemented differently, and you can keep reading below.
 
 ## Kubernetes
 
