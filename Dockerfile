@@ -13,6 +13,7 @@ COPY app.py /opt/web/
 COPY spell_check.out /opt/web/
 COPY wordlist.txt /opt/web/
 COPY spellcheckapp /opt/web/spellcheckapp
+#COPY config.py /opt/web/instance/
 
 WORKDIR /opt/web
 
