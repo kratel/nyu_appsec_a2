@@ -157,7 +157,7 @@ Apply the yamls in the following order:
 3. postgres-deployment.yaml
 4. postgres-service.yaml
 
-The first 2 are used to create a peristent volume and a persistent volume claim. Make sure you created the directory otherwise you might get a false positive and think you successfully created a persistent volume when in fact minikube created a short-lived temporary one. Double check with the following commands:
+The first 2 are used to create a persistent volume and a persistent volume claim. Make sure you created the directory otherwise you might get a false positive and think you successfully created a persistent volume when in fact minikube created a short-lived temporary one. Double check with the following commands:
 
 ```
 kubectl get pv
@@ -165,9 +165,9 @@ kubectl get pv
 kubectl get pvc
 ```
 
-There should only be one volume called `postgres-pv-volume` and our claim shoud be bound to it.
+There should only be one volume called `postgres-pv-volume` and our claim should be bound to it.
 
-*Note: This won't break the behaviour of the app but you will lose all data upon restarting minikube.*
+*Note: This won't break the behaviour of the app but you will lose all data upon restarting minikube. If true persistence is wanted then storage classes are the way to go, or for local development you can mount a directory on your dev machine.*
 
 The third yaml belongs to the actual deployment. This is used to generate the deployment that will create our postgres pod. There is a lifecycle hook included here which is used to copy the initialization script we stored as a secret. It will copy it to the directory where the docker entrypoint will look in during startup. This is only executed once and won't be rerun if a database is detected. 
 
@@ -209,7 +209,7 @@ Be sure to replace the values wrapped in `<` and `>`. Apply this secret with kub
 #### Spellcheckapp deployment
 
 Now we can apply the spellcheckapp yamls in the following order:
-1. spellcheckapp_wb.yaml
+1. spellcheckapp_web.yaml
 2. spellcheckapp_service.yaml
 
 The first yaml will be used to deploy our app with 4 replicas. These will all be using the same config so the secret key and database connection will be synced between all replicas that this deployment creates.
