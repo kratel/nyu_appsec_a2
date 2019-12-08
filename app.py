@@ -20,6 +20,9 @@ def create_app(test_config=None):
         SPELLCHECK='./a.out',
         WORDLIST='wordlist.txt',
         SQLALCHEMY_DATABASE_URI='sqlite:///' +  os.path.join(app.instance_path, 'spellchecker.sqlite'),
+        ADMIN_USERNAME='replaceme',
+        ADMIN_PASSWORD='replaceme',
+        ADMIN_MFA=1234,
     )
 
     if test_config is None:
@@ -47,15 +50,18 @@ def create_app(test_config=None):
     from spellcheckapp.spellcheck.models import Spell_checks
 
     with app.app_context():
-        db.drop_all()
         db.create_all()
 
-        # Create default admin
-        d_admin = models.User(username='admin', password=generate_password_hash('Administrator@1'), mfa_registered=True, is_admin=True)
-        d_admin_mfa = models.MFA(username='admin', mfa_number=12345678901)
-        db.session.add(d_admin)
-        db.session.add(d_admin_mfa)
-        db.session.commit()
+        try:
+            if models.User.query.filter_by(username=app.config['ADMIN_USERNAME']).first() is None:
+                # Create default admin
+                d_admin = models.User(username=app.config['ADMIN_USERNAME'], password=generate_password_hash(app.config['ADMIN_PASSWORD']), mfa_registered=True, is_admin=True)
+                d_admin_mfa = models.MFA(username=app.config['ADMIN_USERNAME'], mfa_number=app.config['ADMIN_MFA'])
+                db.session.add(d_admin)
+                db.session.add(d_admin_mfa)
+                db.session.commit()
+        except KeyError as e:
+            print("Admin credentials must be defined in config")
 
 
     app.register_blueprint(auth.bp)

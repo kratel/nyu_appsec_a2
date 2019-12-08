@@ -21,7 +21,10 @@ class TestAuth(unittest.TestCase):
                         "WORDLIST":'wordlist.txt',
                         "SESSION_COOKIE_HTTPONLY": True,
                         "SESSION_COOKIE_SAMESITE":'Lax',
-                        "REMEMBER_COOKIE_HTTPONLY":True}
+                        "REMEMBER_COOKIE_HTTPONLY":True,
+                        "ADMIN_USERNAME":'replaceme',
+                        "ADMIN_PASSWORD":'replaceme',
+                        "ADMIN_MFA":1234,}
         base_app = app.create_app(test_config)
         self.app = base_app.test_client()
         self.db_fd = db_fd
@@ -307,7 +310,7 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         # Login as default admin
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = self.login(uname='admin', pword='Administrator@1', mfa='12345678901', csrf_token=csrf_token)
+        response = self.login(uname='replaceme', pword='replaceme', mfa='1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')

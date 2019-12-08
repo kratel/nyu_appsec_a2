@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:9.5
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: pgpasssuper
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgredb
+        - name: secret-init
+          mountPath: "/etc/pg-docker-init"
+          readOnly: true
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - cp /etc/pg-docker-init/init-user-db.sh /docker-entrypoint-initdb.d/init-user-db.sh && chmod +x /docker-entrypoint-initdb.d/init-user-db.sh
+      volumes:
+      - name: postgredb
+        persistentVolumeClaim:
+          claimName: postgres-pv-claim
+      - name: secret-init
+        secret:
+          secretName: postgres-init-secret

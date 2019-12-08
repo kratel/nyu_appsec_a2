@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spellcheck-webapp
+  labels:
+    app: spellcheckapp
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: spellcheckapp
+  template:
+    metadata:
+      labels:
+        app: spellcheckapp
+    spec:
+      containers:
+      - name: spellcheckapp-flask
+        image: spellcheckapp
+        imagePullPolicy: Never
+        resources:
+          limits:
+            cpu: 200m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - name: secret-config
+          mountPath: "/etc/opt/web/instance"
+          readOnly: true
+        ports:
+        - containerPort: 8080
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mkdir /opt/web/instance && cp /etc/opt/web/instance/config.py /opt/web/instance/config.py
+      volumes:
+      - name: secret-config
+        secret:
+          secretName: spellcheckapp-secret
