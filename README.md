@@ -201,7 +201,9 @@ stringData:
     ADMIN_MFA=<secret-MFA-must-be-integer-not-string>
 ```
 
-Be sure to replace the values wrapped in `<` and `>`.
+Be sure to replace the values wrapped in `<` and `>`. Apply this secret with kubectl
+
+#### Spellcheckapp deployment
 
 Now we can apply the spellcheckapp yamls in the following order:
 1. spellcheckapp_wb.yaml
@@ -210,3 +212,8 @@ Now we can apply the spellcheckapp yamls in the following order:
 The first yaml will be used to deploy our app with 4 replicas. These will all be using the same config so the secret key and database connection will be synced between all replicas that this deployment creates.
 
 The second yaml will be used to create a loadbalancer service that will be in charge of directing requests to an available pod. Since all these spellcheckapp pods will be connecting to the same database, this should let our app behave correctly.
+
+
+### Using the app
+
+Now we can run `minikube service list` to see the url and port that our app is serving on. We can just paste this into our browser to check out our app.
