@@ -87,6 +87,9 @@ ADMIN_MFA=<secret-MFA-must-be-integer-not-string>
 ### Testing
 
 This project uses [tox](https://tox.readthedocs.io/en/latest/), [Beutiful Soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), and [unittest](https://docs.python.org/3.7/library/unittest.html) for integration tests.
+
+Each test class defines its own test config, you may modify these ([auth test](test/test_auth.py#L17-L27), [spellcheck test](test/test_spellcheck.py#L22-L29)) to mimic your config more closely but defaults should work in most environments.
+
 To run tests you can simply call `tox` or `make test`.
 
 ### Code Coverage
