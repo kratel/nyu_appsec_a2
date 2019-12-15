@@ -11,6 +11,8 @@ If a spell check executable called `spell_check.out` is placed at the root level
 ```
 SPELLCHECK='./spell_check.out'
 ```
+*Note: This web service also assumes that the spell check executable provided is called with the input text as the first argument. e.g. `./a.out input.txt wordlist.txt`*
+
 If a wordlist called `wordlist.txt` is placed at the root level of the repo then the following pair should be in the config:
 ```
 WORDLIST='wordlist.txt'
@@ -81,8 +83,6 @@ ADMIN_USERNAME='<admin-username>'
 ADMIN_PASSWORD='<secret-admin-password>'
 ADMIN_MFA=<secret-MFA-must-be-integer-not-string>
 ```
-
-*Note: This web service also assumes that the spell check executable provided is called with the input text as the first argument. e.g. `./a.out input.txt wordlist.txt`*
 
 ### Testing
 
