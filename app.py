@@ -67,7 +67,7 @@ def create_app(test_config=None):
     db.init_app(app)
     # Add the models so that create and drop all know which tables to manage
     from spellcheckapp.auth.models import User, MFA  # noqa: F401
-    from spellcheckapp.spellcheck.models import Spell_checks  # noqa: F401
+    from spellcheckapp.spellcheck.models import SpellChecks  # noqa: F401
 
     with app.app_context():
         db.create_all()

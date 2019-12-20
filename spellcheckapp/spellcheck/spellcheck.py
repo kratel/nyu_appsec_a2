@@ -57,10 +57,10 @@ def spell_check():
             result = list(filter(None, result))
             if result:
                 results["misspelled"] = ", ".join(result)
-                new_spell_check = models.Spell_checks(username=g.user.username, submitted_text=results["textout"], misspelled_words=results["misspelled"])
+                new_spell_check = models.SpellChecks(username=g.user.username, submitted_text=results["textout"], misspelled_words=results["misspelled"])
             else:
                 results["no_misspelled"] = "No misspelled words were found."
-                new_spell_check = models.Spell_checks(username=g.user.username, submitted_text=results["textout"], misspelled_words=results["no_misspelled"])
+                new_spell_check = models.SpellChecks(username=g.user.username, submitted_text=results["textout"], misspelled_words=results["no_misspelled"])
 
         if new_spell_check is not None:
             db.session.add(new_spell_check)
@@ -80,7 +80,7 @@ def history():
     form = forms.UserHistoryForm()
     results = {}
     username = g.user.username
-    queryhistory = models.Spell_checks.query.filter_by(username=username)
+    queryhistory = models.SpellChecks.query.filter_by(username=username)
     numqueries = queryhistory.count()
 
     if g.user.is_admin:
@@ -97,7 +97,7 @@ def history():
 
             if error is None:
                 username = quser
-                queryhistory = models.Spell_checks.query.filter_by(username=username)
+                queryhistory = models.SpellChecks.query.filter_by(username=username)
                 numqueries = queryhistory.count()
 
     if g.user.is_admin:
@@ -113,7 +113,7 @@ def history():
 @bp.route('/history/query<int:queryid>', methods=['GET'])
 @login_required
 def query(queryid):
-    query = models.Spell_checks.query.get(queryid)
+    query = models.SpellChecks.query.get(queryid)
     if query is not None and ((g.user.is_admin) or (g.user.username == query.username)):
         query
         render = make_response(render_template('spellcheck/history_s_query.html', query=query))
