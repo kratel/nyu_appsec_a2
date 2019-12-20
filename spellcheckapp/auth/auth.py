@@ -1,21 +1,32 @@
+"""
+Auth Module for Spellcheckapp.
+
+Contains authentication related views.
+"""
+import datetime
 import functools
+import re
+import sqlite3
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for, make_response
+    Blueprint, abort, flash, g, make_response, redirect, render_template, session, url_for
 )
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from spellcheckapp import db
-import sqlite3
-import datetime
 from spellcheckapp.auth import forms
 from spellcheckapp.auth import models
-import re
+
+from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint('auth', __name__, template_folder="../templates")
 
 
 def login_required(view):
+    """
+    Login required wrapper.
+
+    Wraps a view and redirects requests to the view to the login page, unless a user is logged in.
+    """
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:
@@ -28,6 +39,13 @@ def login_required(view):
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
+    """
+    Register view.
+
+    Defines logic for the register view.
+    Performs form validation and handles database calls to create and validate a user.
+    Also constructs response with security headers.
+    """
     form = forms.AuthForm()
     if g.user is None:
         if form.validate_on_submit():
@@ -51,9 +69,9 @@ def register():
 
             if error is None:
                 if (mfa is None) or (mfa == ''):
-                    mfa_reg = 0;
+                    mfa_reg = 0
                 else:
-                    mfa_reg = 1;
+                    mfa_reg = 1
                 new_user = models.User(username=username, password=generate_password_hash(password), mfa_registered=mfa_reg)
                 db.session.add(new_user)
                 if mfa_reg:
@@ -62,7 +80,7 @@ def register():
                 try:
                     db.session.commit()
                     flash('Registration success.')
-                except sqlite3.Error as e:
+                except sqlite3.Error:
                     flash('Registration failure.')
                 return redirect(url_for('auth.register'))
 
@@ -76,6 +94,14 @@ def register():
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
+    """
+    Login view.
+
+    Defines logic for the login view.
+    Performs form validation and handles database calls to validate a user.
+    Logs the login time for the session.
+    Also constructs response with security headers.
+    """
     form = forms.AuthForm()
     if g.user is None:
         if form.validate_on_submit():
@@ -109,7 +135,7 @@ def login():
             if error is None:
                 session.clear()
                 session['user_id'] = user.id
-                new_login = models.AuthLog(userid=user.id, username=username,login_time=datetime.datetime.now())
+                new_login = models.AuthLog(userid=user.id, username=username, login_time=datetime.datetime.now())
                 db.session.add(new_login)
                 db.session.commit()
                 session['login_id'] = new_login.id
@@ -127,6 +153,14 @@ def login():
 @bp.route('/login_history', methods=('GET', 'POST'))
 @login_required
 def login_history():
+    """
+    Login history view.
+
+    This is an admin only view.
+    Defines logic for the login history view.
+    Performs form validation and user level validation.
+    Also constructs response with security headers.
+    """
     if g.user.is_admin:
         form = forms.UserAuthHistoryForm()
         user_auth_history = None
@@ -156,6 +190,7 @@ def login_history():
 
 @bp.before_app_request
 def load_logged_in_user():
+    """Configures the session information for a logged in user."""
     user_id = session.get('user_id')
 
     if user_id is None:
@@ -166,6 +201,12 @@ def load_logged_in_user():
 
 @bp.route('/logout')
 def logout():
+    """
+    Logout view.
+
+    Defines logic for the logout view.
+    Terminates the session and logs the logout time for the session.
+    """
     login_id = session.get('login_id')
     login_log = models.AuthLog.query.get(login_id)
     login_log.logout_time = datetime.datetime.now()
