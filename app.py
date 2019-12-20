@@ -76,9 +76,9 @@ def create_app(test_config=None):
             if models.Users.query.filter_by(username=app.config['ADMIN_USERNAME']).first() is None:
                 # Create default admin
                 d_admin = models.Users(username=app.config['ADMIN_USERNAME'],
-                                      password=generate_password_hash(app.config['ADMIN_PASSWORD']),
-                                      mfa_registered=True,
-                                      is_admin=True)
+                                       password=generate_password_hash(app.config['ADMIN_PASSWORD']),
+                                       mfa_registered=True,
+                                       is_admin=True)
                 d_admin_mfa = models.MFA(username=app.config['ADMIN_USERNAME'],
                                          mfa_number=app.config['ADMIN_MFA'])
                 db.session.add(d_admin)
