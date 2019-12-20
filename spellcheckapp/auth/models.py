@@ -48,7 +48,7 @@ class AuthLog(db.Model):
     username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
     login_time = db.Column(db.DateTime(), nullable=False)
     logout_time = db.Column(db.DateTime(), nullable=True)
-    
+
     def __repr__(self):
         """Defines string representation of an AuthLog tuple."""
         return '<AuthLog %r' % self.id
