@@ -10,7 +10,7 @@ class SpellChecks(db.Model):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), db.ForeignKey('user.username'), unique=False, nullable=False)
+    username = db.Column(db.String(20), db.ForeignKey('users.username'), unique=False, nullable=False)
     submitted_text = db.Column(db.String(501), unique=False, nullable=False)
     misspelled_words = db.Column(db.String(501), unique=False, nullable=True)
 

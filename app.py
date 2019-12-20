@@ -66,16 +66,16 @@ def create_app(test_config=None):
     # Associate db with app
     db.init_app(app)
     # Add the models so that create and drop all know which tables to manage
-    from spellcheckapp.auth.models import User, MFA  # noqa: F401
+    from spellcheckapp.auth.models import Users, MFA  # noqa: F401
     from spellcheckapp.spellcheck.models import SpellChecks  # noqa: F401
 
     with app.app_context():
         db.create_all()
 
         try:
-            if models.User.query.filter_by(username=app.config['ADMIN_USERNAME']).first() is None:
+            if models.Users.query.filter_by(username=app.config['ADMIN_USERNAME']).first() is None:
                 # Create default admin
-                d_admin = models.User(username=app.config['ADMIN_USERNAME'],
+                d_admin = models.Users(username=app.config['ADMIN_USERNAME'],
                                       password=generate_password_hash(app.config['ADMIN_PASSWORD']),
                                       mfa_registered=True,
                                       is_admin=True)

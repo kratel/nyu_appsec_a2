@@ -62,7 +62,7 @@ def register():
             elif not password:
                 error = 'Password is required.'
                 flash(error)
-            elif models.User.query.filter_by(username=username).first() is not None:
+            elif models.Users.query.filter_by(username=username).first() is not None:
                 error = 'Username is not available.'
                 flash(error)
                 flash('Registration failure.')
@@ -72,7 +72,7 @@ def register():
                     mfa_reg = 0
                 else:
                     mfa_reg = 1
-                new_user = models.User(username=username, password=generate_password_hash(password), mfa_registered=mfa_reg)
+                new_user = models.Users(username=username, password=generate_password_hash(password), mfa_registered=mfa_reg)
                 db.session.add(new_user)
                 if mfa_reg:
                     new_mfa = models.MFA(username=username, mfa_number=mfa)
@@ -108,7 +108,7 @@ def login():
             username = form.username.data
             password = form.password.data
             error = None
-            user = models.User.query.filter_by(username=username).first()
+            user = models.Users.query.filter_by(username=username).first()
 
             if user is None:
                 error = 'Invalid/Incorrect credentials.'
@@ -167,7 +167,7 @@ def login_history():
         if form.validate_on_submit():
             userid = form.userid.data
             error = None
-            user = models.User.query.get(userid)
+            user = models.Users.query.get(userid)
 
             if user is None:
                 error = 'User does not exist.'
@@ -196,7 +196,7 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = models.User.query.filter_by(id=user_id).first()
+        g.user = models.Users.query.filter_by(id=user_id).first()
 
 
 @bp.route('/logout')

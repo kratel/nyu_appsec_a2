@@ -2,11 +2,11 @@
 from spellcheckapp import db
 
 
-class User(db.Model):
+class Users(db.Model):
     """
-    User Database Model.
+    Users Database Model.
 
-    Defines User fields.
+    Defines Users fields.
     """
 
     id = db.Column(db.Integer, primary_key=True)
@@ -16,7 +16,7 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, unique=False, default=False)
 
     def __repr__(self):
-        """Defines string representation of a User tuple."""
+        """Defines string representation of a Users tuple."""
         return '<User %r>' % self.username
 
 
@@ -28,7 +28,7 @@ class MFA(db.Model):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
+    username = db.Column(db.String(20), db.ForeignKey('users.username'), nullable=False)
     mfa_number = db.Column(db.String(20), unique=False, nullable=False)
 
     def __repr__(self):
@@ -44,8 +44,8 @@ class AuthLog(db.Model):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    userid = db.Column(db.Integer, db.ForeignKey('user.id'))
-    username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
+    userid = db.Column(db.Integer, db.ForeignKey('users.id'))
+    username = db.Column(db.String(20), db.ForeignKey('users.username'), nullable=False)
     login_time = db.Column(db.DateTime(), nullable=False)
     logout_time = db.Column(db.DateTime(), nullable=True)
 

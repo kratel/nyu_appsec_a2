@@ -91,7 +91,7 @@ def history():
             if not quser:
                 error = "Invalid input"
                 flash(error)
-            elif authmodels.User.query.filter_by(username=quser).first() is None:
+            elif authmodels.Users.query.filter_by(username=quser).first() is None:
                 error = "No user with this username found"
                 flash(error)
 
