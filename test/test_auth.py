@@ -36,6 +36,7 @@ class TestAuth(unittest.TestCase):
         test_config = {"SECRET_KEY": 'test',
                        "TESTING": True,
                        "SQLALCHEMY_DATABASE_URI": 'sqlite:///' + database_name,
+                       "SQLALCHEMY_TRACK_MODIFICATIONS": False,
                        "SPELLCHECK": './spell_check.out',
                        "WORDLIST": 'wordlist.txt',
                        "SESSION_COOKIE_HTTPONLY": True,
