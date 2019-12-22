@@ -1,30 +1,50 @@
-import unittest
+"""
+Tests the auth module of the spellcheckapp.
+
+Makes use of flask's test client to perform integration tests.
+"""
+import os
+import sys
 import tempfile
-import bs4
-import os, sys
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(parent_dir)
+import unittest
 
 import app
+
+import bs4
+
 from spellcheckapp.auth.models import MFA
+
+
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
 
 
 beautifulsoup = bs4.BeautifulSoup
 
+
 class TestAuth(unittest.TestCase):
+    """Groups Auth tests to use the same test client."""
+
     def setUp(self):
+        """
+        Runs before each test.
+
+        Creates test flask client, using a test config.
+        Creates temporary sqlite file.
+        """
         db_fd, database_name = tempfile.mkstemp()
-        test_config = { "SECRET_KEY":'test',
-                        "TESTING": True,
-                        "SQLALCHEMY_DATABASE_URI": 'sqlite:///' + database_name,
-                        "SPELLCHECK":'./spell_check.out',
-                        "WORDLIST":'wordlist.txt',
-                        "SESSION_COOKIE_HTTPONLY": True,
-                        "SESSION_COOKIE_SAMESITE":'Lax',
-                        "REMEMBER_COOKIE_HTTPONLY":True,
-                        "ADMIN_USERNAME":'replaceme',
-                        "ADMIN_PASSWORD":'replaceme',
-                        "ADMIN_MFA":1234,}
+        test_config = {"SECRET_KEY": 'test',
+                       "TESTING": True,
+                       "SQLALCHEMY_DATABASE_URI": 'sqlite:///' + database_name,
+                       "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+                       "SPELLCHECK": './spell_check.out',
+                       "WORDLIST": 'wordlist.txt',
+                       "SESSION_COOKIE_HTTPONLY": True,
+                       "SESSION_COOKIE_SAMESITE": 'Lax',
+                       "REMEMBER_COOKIE_HTTPONLY": True,
+                       "ADMIN_USERNAME": 'replaceme',
+                       "ADMIN_PASSWORD": 'replaceme',
+                       "ADMIN_MFA": 1234, }
         base_app = app.create_app(test_config)
         self.app = base_app.test_client()
         self.db_fd = db_fd
@@ -32,20 +52,22 @@ class TestAuth(unittest.TestCase):
         self.base_app = base_app
 
     def tearDown(self):
+        """Tears down the test client and removes the sqlite file."""
         os.close(self.db_fd)
         os.unlink(self.database_name)
 
-    ## Helper Funcs
+    # Helper Funcs
     def register(self, uname, pword, mfa="", csrf_token=""):
+        """Helper function to issue a register request."""
         if mfa:
-            pdata = { "username": uname,
-                      "password": pword,
-                      "mfa": mfa,
-                      "csrf_token": csrf_token}
+            pdata = {"username": uname,
+                     "password": pword,
+                     "mfa": mfa,
+                     "csrf_token": csrf_token}
         else:
-            pdata = { "username": uname,
-                      "password": pword,
-                      "csrf_token": csrf_token}
+            pdata = {"username": uname,
+                     "password": pword,
+                     "csrf_token": csrf_token}
         return self.app.post(
             '/register',
             data=pdata,
@@ -53,15 +75,16 @@ class TestAuth(unittest.TestCase):
         )
 
     def login(self, uname, pword, mfa="", csrf_token=""):
+        """Helper function to issue a login request."""
         if mfa:
-            pdata = { "username": uname,
-                      "password": pword,
-                      "mfa": mfa,
-                      "csrf_token": csrf_token}
+            pdata = {"username": uname,
+                     "password": pword,
+                     "mfa": mfa,
+                     "csrf_token": csrf_token}
         else:
-            pdata = { "username": uname,
-                      "password": pword,
-                      "csrf_token": csrf_token}
+            pdata = {"username": uname,
+                     "password": pword,
+                     "csrf_token": csrf_token}
         return self.app.post(
             '/login',
             data=pdata,
@@ -69,15 +92,17 @@ class TestAuth(unittest.TestCase):
         )
 
     def logout(self):
+        """Helper function to issue a logout request."""
         return self.app.get(
             '/logout',
             follow_redirects=True
         )
 
     def query_userid_history(self, userid=None, csrf_token=""):
+        """Helper function to issue a request to view login history."""
         if userid:
-            pdata = { "userid": userid,
-                      "csrf_token": csrf_token}
+            pdata = {"userid": userid,
+                     "csrf_token": csrf_token}
         else:
             pdata = {"csrf_token": csrf_token}
         return self.app.post(
@@ -86,8 +111,9 @@ class TestAuth(unittest.TestCase):
             follow_redirects=True
         )
 
-    ## Tests Start
+    # Tests Start
     def test_register_get(self):
+        """Tests that register page is retrieved successfully."""
         response = self.app.get('/register', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -96,10 +122,10 @@ class TestAuth(unittest.TestCase):
         self.assertGreater(len(soup.find_all('input', id='2fa')), 0, "No input with id '2fa' found.")
 
     def test_register_data_req_validation(self):
+        """Tests that register page data required validation is being enforced."""
         # Make a GET to grab csrf token
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
-        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
         # Test Data Required Validators
         response = self.register(uname='', pword='', mfa='', csrf_token='')
         self.assertEqual(response.status_code, 200)
@@ -111,6 +137,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any(("The CSRF token is missing" in s.text) for s in results))
 
     def test_register_data_regex_validation(self):
+        """Tests that register page regex validation is being enforced."""
         # Make a GET to grab csrf token
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -125,12 +152,14 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any(("Invalid char in username or not between" in s.text) for s in results))
 
     def test_register_csrf(self):
+        """Tests that csrf token is required for register form submission."""
         response = self.app.get('/register', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         self.assertGreater(len(soup.find_all('input', id='csrf_token')), 0, "No csrf token found in input.")
 
     def test_register_valid_user_registration(self):
+        """Tests that a registration request with valid answers is successful."""
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
@@ -146,6 +175,7 @@ class TestAuth(unittest.TestCase):
             self.assertFalse(mfa_stored is None)
 
     def test_register_repeated_username(self):
+        """Tests that the same username can not be registered twice."""
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
@@ -161,6 +191,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any(("Registration failure" in s.text) for s in results))
 
     def test_login_get(self):
+        """Tests that login page is retrieved successfully."""
         response = self.app.get('/login', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -169,10 +200,10 @@ class TestAuth(unittest.TestCase):
         self.assertGreater(len(soup.find_all('input', id='2fa')), 0, "No input with id '2fa' found.")
 
     def test_login_data_req_validation(self):
+        """Tests that login page data required validation is being enforced."""
         # Make a GET to grab csrf token
         response = self.app.get('/login', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
-        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
         # Test Data Required Validators
         response = self.login(uname='', pword='', mfa='', csrf_token='')
         self.assertEqual(response.status_code, 200)
@@ -184,6 +215,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any(("The CSRF token is missing" in s.text) for s in results))
 
     def test_login_regex_validation(self):
+        """Tests that login page regex validation is being enforced."""
         # Make a GET to grab csrf token
         response = self.app.get('/login', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -198,12 +230,14 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any(("Invalid char in username or not between" in s.text) for s in results))
 
     def test_login_csrf(self):
+        """Tests that csrf token is required for login form submission."""
         response = self.app.get('/login', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         self.assertGreater(len(soup.find_all('input', id='csrf_token')), 0, "No csrf token found in input.")
 
     def test_login_valid_user_login(self):
+        """Tests that a login request with valid answers is successful."""
         # Register a user
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -224,6 +258,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Login success" in s.text for s in results))
 
     def test_login_invalid_username_login(self):
+        """Tests that a login request with an invalid username fails."""
         # Login as user that does not exist
         response = self.app.get('/login', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -235,6 +270,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Incorrect credentials" in s.text for s in results))
 
     def test_login_invalid_password_login(self):
+        """Tests that a login request with an invalid password fails."""
         # Register a user
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -254,6 +290,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Incorrect credentials" in s.text for s in results))
 
     def test_login_invalid_mfa_login(self):
+        """Tests that a login request with an invalid mfa entry fails."""
         # Register a user
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -280,6 +317,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Two-factor authentication failure" in s.text for s in results))
 
     def test_logout(self):
+        """Tests that logout request is successful and redirects to expected page."""
         # Register a user
         response = self.app.get('/register', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
@@ -306,6 +344,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Need to spell check some text?" in s.text for s in results))
 
     def test_login_history(self):
+        """Tests that the login history page can be accessed by an admin user."""
         response = self.app.get('/login', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         # Login as default admin

@@ -1,25 +1,45 @@
+"""
+This app.py file is included to initialize the application.
+
+Meant to be run with: flask run
+"""
 import os
 
 from flask import Flask, render_template
+
 from spellcheckapp import db
 from spellcheckapp.auth import auth, models
 from spellcheckapp.spellcheck import spellcheck
+
 from werkzeug.security import generate_password_hash
 
 
 def page_not_found(e):
-  return render_template('404.html'), 404
+    """
+    Catches 404 errors and render a 404 page stylized with the design of the web app.
+
+    Returns 404 static page.
+    """
+    return render_template('404.html'), 404
 
 
 def create_app(test_config=None):
-    # create and configure the app
-    app = Flask('__name__', instance_relative_config=True, static_url_path='/static', static_folder='spellcheckapp/static',)
+    """
+    Init flask application.
+
+    Will use a default config if it can't find a config in the instance directory.
+    Otherwise uses the config provided to set default options for the app.
+    """
+    app = Flask('__name__',
+                instance_relative_config=True,
+                static_url_path='/static',
+                static_folder='spellcheckapp/static',)
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'spellchecker.sqlite'),
         SPELLCHECK='./a.out',
         WORDLIST='wordlist.txt',
-        SQLALCHEMY_DATABASE_URI='sqlite:///' +  os.path.join(app.instance_path, 'spellchecker.sqlite'),
+        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'spellchecker.sqlite'),
         ADMIN_USERNAME='replaceme',
         ADMIN_PASSWORD='replaceme',
         ADMIN_MFA=1234,
@@ -46,31 +66,34 @@ def create_app(test_config=None):
     # Associate db with app
     db.init_app(app)
     # Add the models so that create and drop all know which tables to manage
-    from spellcheckapp.auth.models import User, MFA
-    from spellcheckapp.spellcheck.models import Spell_checks
+    from spellcheckapp.auth.models import Users, MFA  # noqa: F401
+    from spellcheckapp.spellcheck.models import SpellChecks  # noqa: F401
 
     with app.app_context():
         db.create_all()
 
         try:
-            if models.User.query.filter_by(username=app.config['ADMIN_USERNAME']).first() is None:
+            if models.Users.query.filter_by(username=app.config['ADMIN_USERNAME']).first() is None:
                 # Create default admin
-                d_admin = models.User(username=app.config['ADMIN_USERNAME'], password=generate_password_hash(app.config['ADMIN_PASSWORD']), mfa_registered=True, is_admin=True)
-                d_admin_mfa = models.MFA(username=app.config['ADMIN_USERNAME'], mfa_number=app.config['ADMIN_MFA'])
+                d_admin = models.Users(username=app.config['ADMIN_USERNAME'],
+                                       password=generate_password_hash(app.config['ADMIN_PASSWORD']),
+                                       mfa_registered=True,
+                                       is_admin=True)
+                d_admin_mfa = models.MFA(username=app.config['ADMIN_USERNAME'],
+                                         mfa_number=app.config['ADMIN_MFA'])
                 db.session.add(d_admin)
                 db.session.add(d_admin_mfa)
                 db.session.commit()
-        except KeyError as e:
-            print("Admin credentials must be defined in config")
-
+        except KeyError:
+            print("Admin credentials must be defined in config, continuing without default admin.")
 
     app.register_blueprint(auth.bp)
-
     app.register_blueprint(spellcheck.bp)
     app.add_url_rule('/', endpoint='index')
     app.register_error_handler(404, page_not_found)
 
     return app
+
 
 if __name__ == '__main__':
     app = create_app()

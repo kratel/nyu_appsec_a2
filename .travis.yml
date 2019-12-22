@@ -4,6 +4,11 @@ python:
   - "3.7"
   - "3.6"
 
+jobs:
+  include:
+    - stage: lint
+      script: make lint
+
 before_install:
   - make get-deps
   - pip install codecov
@@ -12,6 +17,11 @@ after_success:
   - codecov
 
 install: pip install -r requirements.txt
+
+stages:
+  - lint
+  - test
+
 script:
   - make test
   - make coverage
