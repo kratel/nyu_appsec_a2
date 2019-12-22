@@ -77,12 +77,9 @@ def create_app(test_config=None):
                 # Create default admin
                 d_admin = models.Users(username=app.config['ADMIN_USERNAME'],
                                        password=generate_password_hash(app.config['ADMIN_PASSWORD']),
-                                       mfa_registered=True,
+                                       mfa_registered=False,
                                        is_admin=True)
-                d_admin_mfa = models.MFA(username=app.config['ADMIN_USERNAME'],
-                                         mfa_number=app.config['ADMIN_MFA'])
                 db.session.add(d_admin)
-                db.session.add(d_admin_mfa)
                 db.session.commit()
         except KeyError:
             print("Admin credentials must be defined in config, continuing without default admin.")
