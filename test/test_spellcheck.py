@@ -8,6 +8,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import app
 
@@ -37,6 +38,7 @@ class TestAuth(unittest.TestCase):
         test_config = {"SECRET_KEY": 'test',
                        "TESTING": True,
                        "SQLALCHEMY_DATABASE_URI": 'sqlite:///' + database_name,
+                       "SQLALCHEMY_TRACK_MODIFICATIONS": False,
                        "SPELLCHECK": spellcheck_path,
                        "WORDLIST": wordlist_path,
                        "SESSION_COOKIE_HTTPONLY": True,
@@ -172,7 +174,99 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         self.assertGreater(len(soup.find_all('input', id='csrf_token')), 0, "No csrf token found in input.")
 
-    @unittest.skipIf(((not pathlib.Path(spellcheck_path).exists()) and (not pathlib.Path(wordlist_path).exists())), 'Spellcheck executable or wordlist not in appropriate path.')  # noqa: E501
+    @patch('subprocess.Popen')
+    @patch('tempfile.TemporaryFile', unittest.mock.mock_open(read_data=b''))
+    def test_mock_spell_check_basic_input(self, subproc):
+        """Mocks spell check executable and tests that spell check submission works and correct words are treated as expected returning an element with id 'no_misspelled'."""  # noqa: E501
+        # Register a user
+        response = self.app.get('/register', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='success')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Registration success" in s.text for s in results))
+        # Login as a user
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.login(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='result')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Login success" in s.text for s in results))
+        # Now get the spell_check page
+        response = self.app.get('/spell_check', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all('title')
+        self.assertTrue(any(("Spell Checker - Submission" in s.text) for s in results))
+        self.assertGreater(len(soup.find_all('textarea', id="inputtext")), 0, "No textarea with id 'inputtext' found.")
+        # Setup mocks
+        subproc.return_value = unittest.mock.MagicMock()
+        # Submit some text to spell checker
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        inputtext = " Some correct words"
+        response = self.spell_check_text(inputtext=inputtext, csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(subproc.called)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find('p', id="textout")
+        self.assertTrue(inputtext in results.text)
+        results = soup.find('p', id="no_misspelled")
+        self.assertTrue(results)
+
+    @patch('subprocess.Popen')
+    @patch('tempfile.TemporaryFile', unittest.mock.mock_open(read_data=b'flkfkef\nlkferf\n'))
+    def test_mock_spell_check_basic_misspelled_input(self, subproc):
+        """Mocks spell check executable and tests that spell check submission works and incorrect words are treated as expected returning a list of misspelled words."""  # noqa: E501
+        # Register a user
+        response = self.app.get('/register', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.register(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='success')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Registration success" in s.text for s in results))
+        # Login as a user
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.login(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='result')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Login success" in s.text for s in results))
+        # Now get the spell_check page
+        response = self.app.get('/spell_check', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all('title')
+        self.assertTrue(any(("Spell Checker - Submission" in s.text) for s in results))
+        self.assertGreater(len(soup.find_all('textarea', id="inputtext")), 0, "No textarea with id 'inputtext' found.")
+        # Setup mocks
+        subproc.return_value = unittest.mock.MagicMock()
+        # Submit some text to spell checker
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        inputtext = " Some incorrect words "
+        misspelled_words = "flkfkef lkferf"
+        inputtext += misspelled_words
+        response = self.spell_check_text(inputtext=inputtext, csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(subproc.called)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find('p', id="textout")
+        # Text won't be equal because inputtext has a carriage return appended to it.
+        self.assertTrue(inputtext in results.text)
+        results = soup.find('p', id="misspelled")
+        misspelled_words_out = results.text.split(", ")
+        self.assertEqual(len(misspelled_words_out), 2, "Did not return expected amount of misspelled words")
+        for word in misspelled_words_out:
+            self.assertTrue(word in misspelled_words, "Expected misspelled word not returned.")
+
+    @unittest.skipIf(((not pathlib.Path(spellcheck_path).exists()) or (not pathlib.Path(wordlist_path).exists())), 'Spellcheck executable or wordlist not in appropriate path.')  # noqa: E501
     def test_spell_check_basic_input(self):
         """Tests that spell check submission works and correct words are treated as expected returning an element with id 'no_misspelled'."""
         # Register a user
@@ -211,7 +305,7 @@ class TestAuth(unittest.TestCase):
         results = soup.find('p', id="no_misspelled")
         self.assertTrue(results)
 
-    @unittest.skipIf(((not pathlib.Path(spellcheck_path).exists()) and (not pathlib.Path(wordlist_path).exists())), 'Spellcheck executable or wordlist not in appropriate path.')  # noqa: E501
+    @unittest.skipIf(((not pathlib.Path(spellcheck_path).exists()) or (not pathlib.Path(wordlist_path).exists())), 'Spellcheck executable or wordlist not in appropriate path.')  # noqa: E501
     def test_spell_check_basic_misspelled_input(self):
         """Tests that spell check submission works and incorrect words are treated as expected returning a list of misspelled words."""
         # Register a user
