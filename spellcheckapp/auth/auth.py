@@ -2,6 +2,7 @@
 Auth Module for Spellcheckapp.
 
 Contains authentication related views.
+All responses are constructed with security headers.
 """
 import datetime
 import functools
@@ -44,7 +45,6 @@ def register():
 
     Defines logic for the register view.
     Performs form validation and handles database calls to create and validate a user.
-    Also constructs response with security headers.
     """
     form = forms.AuthForm()
     if g.user is None:
@@ -100,7 +100,6 @@ def login():
     Defines logic for the login view.
     Performs form validation and handles database calls to validate a user.
     Logs the login time for the session.
-    Also constructs response with security headers.
     """
     form = forms.AuthForm()
     if g.user is None:
@@ -159,7 +158,7 @@ def login_history():
     This is an admin only view.
     Defines logic for the login history view.
     Performs form validation and user level validation.
-    Also constructs response with security headers.
+    An admin can use the form to query for other user login histories using a user ID.
     """
     if g.user.is_admin:
         form = forms.UserAuthHistoryForm()
