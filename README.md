@@ -1,8 +1,25 @@
 # Spell Check Web Service
 
-[![Build Status](https://travis-ci.org/kratel/nyu_appsec_a2.svg?branch=master)](https://travis-ci.org/kratel/nyu_appsec_a2)
+<table>
+<tr>
+  <td>Build Status</td>
+  <td>
+    <a href="https://travis-ci.org/kratel/nyu_appsec_a2">
+    <img src="https://travis-ci.org/kratel/nyu_appsec_a2.svg?branch=master" alt="travis build status" />
+    </a>
+  </td>
+</tr>
+<tr>
+  <td>Coverage</td>
+  <td>
+    <a href="https://codecov.io/gh/kratel/nyu_appsec_a2">
+    <img src="https://codecov.io/gh/kratel/nyu_appsec_a2/branch/master/graph/badge.svg?token=S6tquPAh6H" />
+    </a>
+  </td>
+</tr>
+</table>
 
-[![codecov](https://codecov.io/gh/kratel/nyu_appsec_a2/branch/master/graph/badge.svg?token=S6tquPAh6H)](https://codecov.io/gh/kratel/nyu_appsec_a2)
+## Quick Notes
 
 A web service to run a spell checker. There are two files that are not included in this repo which are necessary. One is a spell check executable and the other is a wordlist.txt file that will be used as a valid dictionary of words to check against. They can be placed at the root level of the repo. The configration should be updated to point to these files accordingly.
 
@@ -18,7 +35,7 @@ If a wordlist called `wordlist.txt` is placed at the root level of the repo then
 WORDLIST='wordlist.txt'
 ```
 
-## Usage
+## Basic Usage
 
 A user must register using the `/register` form and login. Afterwards they will be able to submit text that will be spell checked.
 
