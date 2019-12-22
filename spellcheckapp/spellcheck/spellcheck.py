@@ -1,21 +1,35 @@
-from flask import (
-    Blueprint, flash, g, redirect, render_template, request, url_for, current_app, make_response
-)
-from werkzeug.exceptions import abort
+"""
+SpellCheck Module for Spellcheckapp.
 
-from spellcheckapp import db
-from spellcheckapp.auth.auth import login_required
-from spellcheckapp.auth import models as authmodels
-from spellcheckapp.spellcheck import forms, models
-from shlex import quote
+Contains spell check related views.
+All responses are constructed with security headers.
+"""
 import subprocess
 import tempfile
+from shlex import quote
+
+from flask import (
+    Blueprint, current_app, flash, g, make_response, render_template
+)
+
+from spellcheckapp import db
+from spellcheckapp.auth import models as authmodels
+from spellcheckapp.auth.auth import login_required
+from spellcheckapp.spellcheck import forms, models
+
+from werkzeug.exceptions import abort
+
 
 bp = Blueprint('spellcheck', __name__, template_folder="spellcheckapp/templates")
 
 
 @bp.route('/')
 def index():
+    """
+    Index View.
+
+    Landing page for the app at root of the site.
+    """
     render = make_response(render_template('spellcheck/index.html'))
     render.headers.set('Content-Security-Policy', "default-src 'self'")
     render.headers.set('X-Content-Type-Options', 'nosniff')
@@ -27,6 +41,13 @@ def index():
 @bp.route('/spell_check', methods=('GET', 'POST'))
 @login_required
 def spell_check():
+    """
+    Spell Check View.
+
+    Must be logged in to access this view, otherwise redirected to login page.
+    Text is submitted here to be spell checked.
+    Text submissions and results are stored as query history for the logged in user.
+    """
     form = forms.SpellCheckForm()
     results = {}
     if form.validate_on_submit():
@@ -73,12 +94,23 @@ def spell_check():
     render.headers.set('X-XSS-Protection', '1; mode=block')
     return render
 
+
 @bp.route('/history', methods=('GET', 'POST'))
 @login_required
 def history():
+    """
+    History View.
+
+    Must be logged in to access this view, otherwise redirected to login page.
+    This page will list links to queries that the user has submitted.
+    Will also show total number of queries submitted so far.
+
+    If an admin user visits this page, there will be a form available.
+    Admins can lookup another user's history by submitting a username.
+    Performs form validation and user level validation.
+    """
     render = None
     form = forms.UserHistoryForm()
-    results = {}
     username = g.user.username
     queryhistory = models.SpellChecks.query.filter_by(username=username)
     numqueries = queryhistory.count()
@@ -110,9 +142,18 @@ def history():
     render.headers.set('X-XSS-Protection', '1; mode=block')
     return render
 
+
 @bp.route('/history/query<int:queryid>', methods=['GET'])
 @login_required
 def query(queryid):
+    """
+    Dynamic Query View.
+
+    Must be logged in to access this view, otherwise redirected to login page.
+    A unique view is generated based off a query ID.
+    A page is only returned if the query ID is associated with a logged in user.
+    Otherwise a logged in user will be redirected to a 404 error page.
+    """
     query = models.SpellChecks.query.get(queryid)
     if query is not None and ((g.user.is_admin) or (g.user.username == query.username)):
         query
