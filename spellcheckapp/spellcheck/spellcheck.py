@@ -52,7 +52,6 @@ def spell_check():
     results = {}
     if form.validate_on_submit():
         inputtext = quote(form.inputtext.data)
-        inputtext += " "
         error = None
 
         if not inputtext:
