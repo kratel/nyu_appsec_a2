@@ -276,7 +276,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Login with wrong password
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = self.login(uname='temp1234', pword='oopswrongpassword', mfa='1234', csrf_token=csrf_token)
+        response = self.login(uname='temp1234', pword='oopswrongpassword', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
