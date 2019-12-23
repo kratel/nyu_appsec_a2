@@ -37,7 +37,7 @@ WORDLIST='wordlist.txt'
 
 ### Not using mock MFA
 
-MFA was mocked for the assignment requirements originally. The app has been updated to use functional implementation of MFA. It was adapted from this [tutorial](https://blog.miguelgrinberg.com/post/two-factor-authentication-with-flask). Although the authentication flow in this app is different.
+MFA was mocked for the assignment requirements originally. The app has been updated to use functional implementation of MFA. It was adapted from this [tutorial](https://blog.miguelgrinberg.com/post/two-factor-authentication-with-flask). There are a few differences. Users start off with no MFA, an account page was added for users to enable MFA if they choose to do so.
 
 Makes use of:
 - [Onetimepass](https://github.com/tadeck/onetimepass)
