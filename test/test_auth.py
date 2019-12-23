@@ -327,6 +327,10 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
         self.assertEqual(response.status_code, 200)
+        # Check that qrcode is generated
+        response = self.app.get('/qrcode', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        self.assertEqual(response.status_code, 200)
         # Confirm MFA setup
         response = self.mfa_confirm(mfa_confirm=True, csrf_token=csrf_token)
         soup = beautifulsoup(response.data, 'html.parser')
