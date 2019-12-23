@@ -6,12 +6,13 @@ All responses are constructed with security headers.
 """
 import datetime
 import functools
-import re
 import sqlite3
 
 from flask import (
     Blueprint, abort, flash, g, make_response, redirect, render_template, session, url_for
 )
+
+import pyqrcode
 
 from spellcheckapp import db
 from spellcheckapp.auth import forms
@@ -46,42 +47,27 @@ def register():
     Defines logic for the register view.
     Performs form validation and handles database calls to create and validate a user.
     """
-    form = forms.AuthForm()
+    form = forms.RegisterForm()
     if g.user is None:
         if form.validate_on_submit():
             # Validate and santize
             username = form.username.data
             password = form.password.data
-            mfa = form.mfa.data
-            mfa = re.sub(r"\D", "", mfa)
             error = None
 
-            if not username:
-                error = 'Username is required.'
-                flash(error)
-            elif not password:
-                error = 'Password is required.'
-                flash(error)
-            elif models.Users.query.filter_by(username=username).first() is not None:
+            if models.Users.query.filter_by(username=username).first() is not None:
                 error = 'Username is not available.'
                 flash(error)
                 flash('Registration failure.')
 
             if error is None:
-                if (mfa is None) or (mfa == ''):
-                    mfa_reg = 0
-                else:
-                    mfa_reg = 1
-                new_user = models.Users(username=username, password=generate_password_hash(password), mfa_registered=mfa_reg)
+                new_user = models.Users(username=username, password=generate_password_hash(password), mfa_registered=False)
                 db.session.add(new_user)
-                if mfa_reg:
-                    new_mfa = models.MFA(username=username, mfa_number=mfa)
-                    db.session.add(new_mfa)
                 try:
                     db.session.commit()
-                    flash('Registration success.')
+                    flash('User Registration success.')
                 except sqlite3.Error:
-                    flash('Registration failure.')
+                    flash('User Registration failure.')
                 return redirect(url_for('auth.register'))
 
     render = make_response(render_template('auth/register.html', form=form))
@@ -90,6 +76,113 @@ def register():
     render.headers.set('X-Frame-Options', 'SAMEORIGIN')
     render.headers.set('X-XSS-Protection', '1; mode=block')
     return render
+
+
+@bp.route('/account', methods=('GET', 'POST'))
+@login_required
+def account():
+    """
+    Account Page View.
+
+    Displays form to update user account details..
+    """
+    mfa_status = g.user.mfa_registered
+    form = forms.UpdateAccountForm(mfa_enabled=mfa_status)
+    if form.validate_on_submit():
+        password = form.password.data
+        mfa_enabled = form.mfa_enabled.data
+        user = models.Users.query.filter_by(username=g.user.username).first()
+
+        if password:
+            user.password = generate_password_hash(password)
+            db.session.commit()
+            flash('Password has been updated.')
+
+        if mfa_enabled != user.mfa_registered:
+            cur_mfa = models.MFA.query.filter_by(username=g.user.username).first()
+            if cur_mfa is not None:
+                db.session.delete(cur_mfa)
+                db.session.commit()
+            if mfa_enabled:
+                new_mfa = models.MFA(username=g.user.username)
+                db.session.add(new_mfa)
+                db.session.commit()
+                return redirect(url_for('auth.mfa_setup'))
+            else:
+                user.mfa_registered = False
+                db.session.commit()
+                flash('MFA has been disabled.')
+    render = make_response(render_template('auth/account.html', form=form))
+    render.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+    render.headers.set('Pragma', 'no-cache')
+    render.headers.set('Expires', '0')
+    render.headers.set('Content-Security-Policy', "default-src 'self'")
+    render.headers.set('X-Content-Type-Options', 'nosniff')
+    render.headers.set('X-Frame-Options', 'SAMEORIGIN')
+    render.headers.set('X-XSS-Protection', '1; mode=block')
+    return render
+
+
+@bp.route('/multifactor', methods=('GET', 'POST'))
+@login_required
+def mfa_setup():
+    """
+    Multi Factor Setup View.
+
+    Displays QR Code for MFA token setup.
+    """
+    form = forms.MFAForm()
+    if g.user.mfa_registered:
+        return redirect(url_for('auth.account'))
+    if form.validate_on_submit():
+        mfa_confirm = form.mfa_confirm.data
+        if mfa_confirm:
+            user = models.Users.query.filter_by(username=g.user.username).first()
+            user.mfa_registered = True
+            db.session.commit()
+            flash('MFA Setup success.')
+        else:
+            flash('MFA was not enabled.')
+        return redirect(url_for('auth.account'))
+    render = make_response(render_template('auth/mfa_setup.html', form=form))
+    render.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+    render.headers.set('Pragma', 'no-cache')
+    render.headers.set('Expires', '0')
+    render.headers.set('Content-Security-Policy', "default-src 'self'")
+    render.headers.set('X-Content-Type-Options', 'nosniff')
+    render.headers.set('X-Frame-Options', 'SAMEORIGIN')
+    render.headers.set('X-XSS-Protection', '1; mode=block')
+    return render
+
+
+@bp.route('/qrcode')
+@login_required
+def qrcode():
+    """
+    QR Code Generator.
+
+    Generates QR Code for MFA.
+    """
+    mfa_candidate = models.MFA.query.filter_by(username=g.user.username).first()
+    if mfa_candidate is None:
+        abort(404)
+    if g.user.mfa_registered:
+        abort(404)
+
+    # render qrcode
+    url = pyqrcode.create(mfa_candidate.get_totp_uri())
+    from io import BytesIO
+    stream = BytesIO()
+    url.svg(stream, scale=5)
+    return stream.getvalue(), 200, {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Content-Security-Policy': "default-src 'self'",
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-XSS-Protection': '1; mode=block'}
 
 
 @bp.route('/login', methods=('GET', 'POST'))
@@ -101,7 +194,7 @@ def login():
     Performs form validation and handles database calls to validate a user.
     Logs the login time for the session.
     """
-    form = forms.AuthForm()
+    form = forms.LoginForm()
     if g.user is None:
         if form.validate_on_submit():
             username = form.username.data
@@ -119,15 +212,11 @@ def login():
             if user is not None:
                 if user.mfa_registered:
                     mfa = form.mfa.data
-                    mfa = re.sub(r"\D", "", mfa)
                     mfa_stored = models.MFA.query.filter_by(username=username).first()
                     if mfa_stored is None:
                         error = 'Corrupt state, contact site admin.'
                         flash(error)
-                    elif not mfa:
-                        error = 'Two-factor authentication failure.'
-                        flash(error)
-                    elif not int(mfa) == int(mfa_stored.mfa_number.strip()):
+                    elif not mfa_stored.verify_totp(mfa):
                         error = 'Two-factor authentication failure.'
                         flash(error)
 
