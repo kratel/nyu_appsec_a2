@@ -49,7 +49,7 @@ class MFA(db.Model):
 
     def verify_totp(self, token):
         """Verifies TOTP."""
-        return onetimepass.valid_totp(token, self.mfa_secret)
+        return onetimepass.valid_totp(token, self.mfa_secret, window=1)
 
     def __repr__(self):
         """Defines string representation of a MFA tuple."""
