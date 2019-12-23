@@ -35,6 +35,14 @@ If a wordlist called `wordlist.txt` is placed at the root level of the repo then
 WORDLIST='wordlist.txt'
 ```
 
+### Not using mock MFA
+
+MFA was mocked for the assignment requirements originally. The app has been updated to use functional implementation of MFA. It was adapted from this [tutorial](https://blog.miguelgrinberg.com/post/two-factor-authentication-with-flask). Although the authentication flow in this app is different.
+
+Makes use of:
+- [Onetimepass](https://github.com/tadeck/onetimepass)
+- [PyQRCode](https://github.com/mnooner256/pyqrcode)
+
 ## Basic Usage
 
 A user must register using the `/register` form and login. Afterwards they will be able to submit text that will be spell checked.
