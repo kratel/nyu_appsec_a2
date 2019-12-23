@@ -375,14 +375,13 @@ class TestAuth(unittest.TestCase):
         response = self.logout()
         self.assertEqual(response.status_code, 200)
         # And try to login with mfa
-        mfa_token = ""
-        with self.base_app.app_context():
-            mfa_stored = MFA.query.filter_by(username='temp1234').first()
-            mfa_token = onetimepass.get_totp(mfa_stored.mfa_secret)
         response = self.app.get('/login', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = self.login(uname='temp1234', pword='temp1234', mfa=mfa_token, csrf_token=csrf_token)
+        with self.base_app.app_context():
+            mfa_stored = MFA.query.filter_by(username='temp1234').first()
+            mfa_token = onetimepass.get_totp(mfa_stored.mfa_secret)
+            response = self.login(uname='temp1234', pword='temp1234', mfa=mfa_token, csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
