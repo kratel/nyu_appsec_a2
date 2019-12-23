@@ -1,4 +1,9 @@
 """Defines Data Models for Auth Module."""
+import base64
+import os
+
+import onetimepass
+
 from spellcheckapp import db
 
 
@@ -29,7 +34,22 @@ class MFA(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), db.ForeignKey('users.username'), nullable=False)
-    mfa_number = db.Column(db.String(20), unique=False, nullable=False)
+    mfa_secret = db.Column(db.String(16), unique=True, nullable=False)
+
+    def __init__(self, **kwargs):
+        """Generates random secret when adding a username."""
+        super(MFA, self).__init__(**kwargs)
+        if self.mfa_secret is None:
+            self.mfa_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
+
+    def get_totp_uri(self):
+        """Generates TOTP URL and data."""
+        return 'otpauth://totp/Spell-Checker-Web:{0}?secret={1}&issuer=Spell-Checker-Web' \
+            .format(self.username, self.mfa_secret)
+
+    def verify_totp(self, token):
+        """Verifies TOTP."""
+        return onetimepass.valid_totp(token, self.mfa_secret)
 
     def __repr__(self):
         """Defines string representation of a MFA tuple."""

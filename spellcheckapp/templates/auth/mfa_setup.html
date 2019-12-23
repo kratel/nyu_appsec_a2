@@ -1,22 +1,19 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Register{% endblock %}</h1>
+  <h1>{% block title %}MFA Setup{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-  {% if g.user %}
-  <a href="{{ url_for('auth.logout') }}">Log Out</a>
-  {% else %}
-  <form action="/register" method="post">
-    {{ form.username.label }} {{ form.username }}
-    <br>
-    {{ form.password.label }} {{ form.password }}
+  <h1>Two Factor Authentication Setup</h1>
+  <p>You are almost done! Open your authenticator app and scan the following QR Code with it:</p>
+  <p><img id="qrcode" src="{{ url_for('auth.qrcode') }}"></p>
+  <form action="/multifactor" method="post">
+    {{ form.mfa_confirm.label }} {{ form.mfa_confirm }}
     <br>
     {{ form.csrf_token }}
-    <input type="submit" value="Register">
+    <input type="submit" value="Done Setting Up">
   </form>
-  {% endif %}
   {% if form.errors %}
     <ul class="errors" id="success">
         {% for field_name, field_errors in form.errors|dictsort if field_errors %}

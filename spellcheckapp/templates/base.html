@@ -6,6 +6,7 @@
   <ul>
     {% if g.user %}
       <li><span>{{ g.user['username'] }}</span>
+      <li><a href="{{ url_for('auth.account') }}">Account</a>
       {% if g.user.is_admin %}
       <li><a href="{{ url_for('auth.login_history') }}">Auth History</a>
       {% endif %}
