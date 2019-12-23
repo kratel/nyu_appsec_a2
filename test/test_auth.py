@@ -400,6 +400,47 @@ class TestAuth(unittest.TestCase):
         self.assertGreater(len(results), 0, "No flash messages received")
         self.assertTrue(any("Login success" in s.text for s in results))
 
+    def test_account_update_password(self):
+        """Tests that password is updated successfully."""
+        # Register a user
+        response = self.app.get('/register', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.register(uname='temp1234', pword='temp1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='success')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Registration success" in s.text for s in results))
+        # Login without mfa
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.login(uname='temp1234', pword='temp1234', mfa='', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        # Go to account page
+        response = self.app.get('/account', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        # Update Password
+        response = self.update_account(pword='temp2345', csrf_token=csrf_token)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        self.assertEqual(response.status_code, 200)
+        results = soup.find_all(id='success')
+        self.assertTrue(any("Password has been updated." in s.text for s in results))
+        # Now logout
+        response = self.logout()
+        self.assertEqual(response.status_code, 200)
+        # And try to login with new password
+        response = self.app.get('/login', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.login(uname='temp1234', pword='temp2345', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='result')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Login success" in s.text for s in results))
+
     def test_login_valid_mfa_login(self):
         """Tests that login with mfa works correctly."""
         # Register a user
