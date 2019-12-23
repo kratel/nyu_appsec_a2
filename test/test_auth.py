@@ -112,7 +112,6 @@ class TestAuth(unittest.TestCase):
         soup = beautifulsoup(response.data, 'html.parser')
         self.assertGreater(len(soup.find_all('input', id='uname')), 0, "No input with id 'uname' found.")
         self.assertGreater(len(soup.find_all('input', id='pword')), 0, "No input with id 'pword' found.")
-        self.assertGreater(len(soup.find_all('input', id='2fa')), 0, "No input with id '2fa' found.")
 
     def test_register_data_req_validation(self):
         """Tests that register page data required validation is being enforced."""
@@ -162,10 +161,6 @@ class TestAuth(unittest.TestCase):
         results = soup.find_all(id='success')
         self.assertGreater(len(results), 0, "No flash messages received")
         self.assertTrue(any("Registration success" in s.text for s in results))
-        # Check that mfa was stored
-        with self.base_app.app_context():
-            mfa_stored = MFA.query.filter_by(username='temp1234').first()
-            self.assertFalse(mfa_stored is None)
 
     def test_register_repeated_username(self):
         """Tests that the same username can not be registered twice."""
@@ -243,7 +238,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Login as a user
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = self.login(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.login(uname='temp1234', pword='temp1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
@@ -323,7 +318,7 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(any("Registration success" in s.text for s in results))
         # Login as a user
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = self.login(uname='temp1234', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.login(uname='temp1234', pword='temp1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
