@@ -106,7 +106,6 @@ SESSION_COOKIE_SAMESITE='Lax'
 REMEMBER_COOKIE_HTTPONLY=True
 ADMIN_USERNAME='<admin-username>'
 ADMIN_PASSWORD='<secret-admin-password>'
-ADMIN_MFA=<secret-MFA-must-be-integer-not-string>
 ```
 
 ### Testing
@@ -250,7 +249,6 @@ stringData:
     REMEMBER_COOKIE_HTTPONLY=True
     ADMIN_USERNAME='<admin-username>'
     ADMIN_PASSWORD='<secret-admin-password>'
-    ADMIN_MFA=<secret-MFA-must-be-integer-not-string>
 ```
 
 Be sure to replace the values wrapped in `<` and `>`. Apply this secret with kubectl
