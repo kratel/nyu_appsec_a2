@@ -166,6 +166,8 @@ def qrcode():
     mfa_candidate = models.MFA.query.filter_by(username=g.user.username).first()
     if mfa_candidate is None:
         abort(404)
+    if g.user.mfa_registered:
+        abort(404)
 
     # render qrcode
     url = pyqrcode.create(mfa_candidate.get_totp_uri())
