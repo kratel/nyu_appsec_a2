@@ -302,7 +302,7 @@ class TestAuth(unittest.TestCase):
         results = soup.find_all(id='result')
         self.assertTrue(any("Incorrect credentials" in s.text for s in results))
 
-    def test_login_valid_mfa_setup(self):
+    def test_account_valid_mfa_setup(self):
         """Tests that mfa setup is working correctly."""
         # Register a user
         response = self.app.get('/register', follow_redirects=True)
@@ -336,6 +336,69 @@ class TestAuth(unittest.TestCase):
             self.assertFalse(mfa_stored is None)
             user_stored = Users.query.filter_by(username='temp1234').first()
             self.assertTrue(user_stored.mfa_registered)
+
+    def test_account_disable_mfa(self):
+        """Tests that mfa can be disabled successfully."""
+        # Register a user
+        response = self.app.get('/register', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.register(uname='temp1234', pword='temp1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='success')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Registration success" in s.text for s in results))
+        # Login without mfa
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.login(uname='temp1234', pword='temp1234', mfa='', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        # Go to account page
+        response = self.app.get('/account', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        # Start MFA setup
+        response = self.update_account(mfa_enabled=True, csrf_token=csrf_token)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        self.assertEqual(response.status_code, 200)
+        # Confirm MFA setup
+        response = self.mfa_confirm(mfa_confirm=True, csrf_token=csrf_token)
+        soup = beautifulsoup(response.data, 'html.parser')
+        # Check that mfa was stored
+        with self.base_app.app_context():
+            mfa_stored = MFA.query.filter_by(username='temp1234').first()
+            self.assertFalse(mfa_stored is None)
+            user_stored = Users.query.filter_by(username='temp1234').first()
+            self.assertTrue(user_stored.mfa_registered)
+        # Now go back to account page
+        response = self.app.get('/account', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        # Disable MFA
+        response = self.update_account(mfa_enabled=False, csrf_token=csrf_token)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        self.assertEqual(response.status_code, 200)
+        # Verify MFA is disabled
+        with self.base_app.app_context():
+            mfa_stored = MFA.query.filter_by(username='temp1234').first()
+            self.assertTrue(mfa_stored is None)
+            user_stored = Users.query.filter_by(username='temp1234').first()
+            self.assertFalse(user_stored.mfa_registered)
+        # Now logout
+        response = self.logout()
+        self.assertEqual(response.status_code, 200)
+        # And try to login without mfa
+        response = self.app.get('/login', follow_redirects=True)
+        soup = beautifulsoup(response.data, 'html.parser')
+        csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
+        response = self.login(uname='temp1234', pword='temp1234', csrf_token=csrf_token)
+        self.assertEqual(response.status_code, 200)
+        soup = beautifulsoup(response.data, 'html.parser')
+        results = soup.find_all(id='result')
+        self.assertGreater(len(results), 0, "No flash messages received")
+        self.assertTrue(any("Login success" in s.text for s in results))
 
     def test_login_valid_mfa_login(self):
         """Tests that login with mfa works correctly."""
