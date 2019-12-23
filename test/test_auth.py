@@ -256,7 +256,7 @@ class TestAuth(unittest.TestCase):
         response = self.app.get('/login', follow_redirects=True)
         soup = beautifulsoup(response.data, 'html.parser')
         csrf_token = soup.find_all('input', id='csrf_token')[0]['value']
-        response = self.login(uname='temp1234fake', pword='temp1234', mfa='1234', csrf_token=csrf_token)
+        response = self.login(uname='temp1234fake', pword='temp1234', csrf_token=csrf_token)
         self.assertEqual(response.status_code, 200)
         soup = beautifulsoup(response.data, 'html.parser')
         results = soup.find_all(id='result')
